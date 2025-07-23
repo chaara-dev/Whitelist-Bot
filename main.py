@@ -4,7 +4,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import Button, View
 
-BUTTON_CHANNEL_ID = 1397063461900648551
+CHAT_CHANNEL_ID = 1397063461900648551
 APP_CHANNEL_ID = 1397078581435170917
 LOGS_CHANNEL_ID = 1397088020611596458
 
@@ -68,9 +68,9 @@ class ApplicationView(discord.ui.View):
                 await new_thread.send(embed=templateEmbed)
 
                 # Silently pings Staff Team then deletes message (will automatically open thread for all staff)
-                staff_ping = await new_thread.send("-# staff ping")
-                await staff_ping.edit(content=f"<@&{STAFF_ROLE_ID}>")
-                await new_thread.purge(limit=1)
+                # staff_ping = await new_thread.send("-# staff ping")
+                # await staff_ping.edit(content=f"<@&{STAFF_ROLE_ID}>")
+                # await new_thread.purge(limit=1)
                 
                 # Sends message to applicant (adds them to channel)
                 await new_thread.send(f"**Hi <@{button.user.id}>, your whitelist application has been created. Please fill out the above application in the chat here. A staff member will review shortly.**")
@@ -106,14 +106,15 @@ async def approve(interaction,
                   client_type: Platforms,
                   message: typing.Optional[str] = "Welcome!"
                 ):
-        if interaction.user.get_role(STAFF_ROLE_ID):
+        command_channel: discord.Thread = interaction.channel
+        if interaction.user.get_role(STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == APP_CHANNEL_ID:
             approvedEmbed.add_field(name="User", value=f"<@{user.id}>", inline=True)
             approvedEmbed.add_field(name="Staff Member", value=f"<@{interaction.user.id}>", inline=True)
             approvedEmbed.add_field(name="** **", value="** **", inline=False)
             approvedEmbed.add_field(name="Minecraft Name", value=f"`{minecraft_name}`", inline=True)
-            approvedEmbed.add_field(name="Client", value=f"`{client_type.name}`", inline=True)
+            approvedEmbed.add_field(name="	Client", value=f"	`{client_type.name}`", inline=True)
 
-            approvedEmbed.add_field(name="Thread", value=f"<#{interaction.channel.id}>", inline=False)
+            approvedEmbed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
 
             approvedEmbed.set_thumbnail(url=f"{user.avatar}")
             approvedEmbed.timestamp = datetime.datetime.now()
@@ -123,10 +124,10 @@ async def approve(interaction,
             await logs.send(embed=approvedEmbed)
 
             await interaction.response.send_message("Application Approved.", ephemeral=True)
-            await interaction.channel.send(content=f"Application Approved. {message}")
+            await command_channel.send(content=f"Application Approved. {message}")
 
 
-            await interaction.channel.edit(
+            await command_channel.edit(
                  name=f"{minecraft_name}'s application ✅",
                  locked=True,
                  archived=True,
@@ -134,7 +135,12 @@ async def approve(interaction,
                 )
             await user.edit(nick=minecraft_name)
             await user.add_roles(discord.utils.get(user.guild.roles, id=MEMBER_ROLE_ID))
-
+            await command_channel.remove_user(user)
+            
+        elif interaction.user.get_role(STAFF_ROLE_ID) and not command_channel.type == discord.ChannelType.private_thread: 
+             await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
+        elif interaction.user.get_role(STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and not command_channel.parent_id == APP_CHANNEL_ID:
+             await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
 
         else:
             await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
