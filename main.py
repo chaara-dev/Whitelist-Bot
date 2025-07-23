@@ -74,13 +74,7 @@ class ApplicationView(discord.ui.View):
                 time.sleep(1.5)
                 await button.response.send_message(f"Your application thread was created at <#{new_thread.id}>.",ephemeral=True)
                 await new_thread.send(embed=templateEmbed)
-
-                # # Silently pings Staff Team then deletes message (will automatically open thread for all staff)
-                # staff_ping = await new_thread.send("-# staff ping")
-                # await staff_ping.edit(content=f"<@&{STAFF_ROLE_ID}>")
-                # await new_thread.purge(limit=1)
                 
-                # Sends message to applicant (adds them to channel)
                 await new_thread.send(f"**Hi <@{button.user.id}>, your whitelist application has been created. Please fill out the above application in the chat here. A staff member will review shortly.**")
 
 
@@ -108,11 +102,12 @@ class Platforms(enum.Enum):
      Bedrock = 2
 @bot.tree.command(name="approve", description="Approve a whitelist", guild=bot.get_guild(SERVER_ID))
 @app_commands.describe(client_type="The applicant's platform")
-async def approve(interaction, 
-                  user: discord.Member,
-                  minecraft_name: str,
-                  client_type: Platforms,
-                  message: typing.Optional[str] = "Welcome!"
+async def approve(
+                interaction, 
+                user: discord.Member,
+                minecraft_name: str,
+                client_type: Platforms,
+                message: typing.Optional[str] = "Welcome!"
                 ):
         command_channel = interaction.channel
         if interaction.user.get_role(STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == APP_CHANNEL_ID:
@@ -156,7 +151,11 @@ async def approve(interaction,
 
 
 @bot.tree.command(name="deny", description="Deny a whitelist", guild=bot.get_guild(SERVER_ID))
-async def deny(interaction, user: discord.Member, reason: str):
+async def deny(
+            interaction, 
+            user: discord.Member,
+            reason: str
+            ):
         command_channel: discord.Thread = interaction.channel
         if interaction.user.get_role(STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == APP_CHANNEL_ID:
             deniedEmbed.add_field(name="User", value=f"<@{user.id}> ({user.name})", inline=True)
@@ -224,7 +223,6 @@ def load_last_message_id():
     except json.JSONDecodeError:
          return None
 
-# Save last_bot_message ID to a file
 def save_last_message_id(message_id):
     with open('storage/last_message_id.json', 'w') as file:
         json.dump({'last_bot_message_id': message_id}, file)
@@ -236,11 +234,10 @@ async def on_ready():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for the keyword..."))
     bot.add_view(ApplicationView())
 
-    channel = bot.get_channel(APP_CHANNEL_ID)
+    application_channel = bot.get_channel(APP_CHANNEL_ID)
     global last_bot_message
     view = ApplicationView()
 
-    # Load the last message ID
     last_bot_message_id = load_last_message_id()
     if last_bot_message_id:
         last_bot_message = await channel.fetch_message(last_bot_message_id)
