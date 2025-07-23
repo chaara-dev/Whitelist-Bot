@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import Button, View
+from termcolor import colored
 
 CHAT_CHANNEL_ID = 1397063461900648551
 APP_CHANNEL_ID = 1397078581435170917
@@ -136,19 +137,36 @@ async def approve(
             await logs.send(embed=approvedEmbed)
 
             await interaction.response.send_message("Application Approved.", ephemeral=True)
-            await command_channel.send(content=f"<@{user.id}> Application approved. {message}")
+            await command_channel.send(content=f"<@{user.id}> Application approved. {message}") 
+            # CHANGE TO BE publicApprovedEmbed !!!
 
+            try:
+                await command_channel.edit(
+                    name=f"{minecraft_name}'s application ✅",
+                    locked=True,
+                    invitable=False,
+                    auto_archive_duration=60
+                    )
+            except discord.Forbidden:
+                print(colored("Error:", "red"), f"Could not edit thread. Missing Permissions.")
+            except discord.HTTPException:
+                print(colored("Error:", "red"), f"Failed to edit thread.")
+            
 
-            await command_channel.edit(
-                 name=f"{minecraft_name}'s application ✅",
-                 locked=True,
-                 invitable=False,
-                 auto_archive_duration=60
-                )
-            await user.edit(nick=minecraft_name)
-            await user.add_roles(discord.utils.get(user.guild.roles, id=MEMBER_ROLE_ID))
+            try:
+                await user.edit(nick=minecraft_name)
+            except discord.errors.Forbidden:
+                print(colored("Error:", "red"), "Could not change nickname. Missing Permissions.")
+                logs.send(f"❗ Failed to change **{user.name}**'s nickname. Missing Permissions.")
 
-            # await command_channel.remove_user(user)
+            try:
+                member_role = discord.utils.get(user.guild.roles, id=MEMBER_ROLE_ID)
+                await user.add_roles(member_role)
+            except discord.Forbidden:
+                print(colored("Error:", "red"), f"Error adding {member_role.name} role to {user.name}. Missing Permissions.")
+                logs.send(f"❗ Failed to add **{member_role.name}** role to **{user.name}**. Missing Permissions.")
+            except discord.HTTPException:
+                print(colored("Error:", "red"), f"Failed to add role to {user.name}.")
             
         elif interaction.user.get_role(STAFF_ROLE_ID) and not command_channel.type == discord.ChannelType.private_thread: 
              await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
@@ -239,7 +257,7 @@ def save_last_message_id(message_id):
 
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user}!')
+    print(f"Logged in as", colored(f"{bot.user}!", "cyan"))
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for the keyword..."))
     bot.add_view(ApplicationView())
 
@@ -248,23 +266,27 @@ async def on_ready():
     view = ApplicationView()
 
     last_bot_message_id = load_last_message_id()
-    if last_bot_message_id:
-        last_bot_message = await channel.fetch_message(last_bot_message_id)
+    if last_bot_message_id is not None:
+        try:
+            last_bot_message = await application_channel.fetch_message(last_bot_message_id)
+        except discord.NotFound:
+            async for searched_message in application_channel.history(limit=1):
+                last_bot_message_id = application_channel.fetch_message(searched_message.id)
 
-    # Check if the last message exists
-    if last_bot_message:
-        # Compare the content of the embed
-        if last_bot_message.embeds and last_bot_message.embeds[0].description == WHITELIST_APP_MESSAGE:
-            return  # Ignore the message
+    if last_bot_message is not None:
+        if last_bot_message.embeds[0].description == WHITELIST_APP_MESSAGE:
+            return 
 
-        # Edit the last message with the new embed and button
         await last_bot_message.edit(embed=templateEmbed, view=view)
     else:
-        # Send the new message if there's no last message
-        last_bot_message = await channel.send(embed=templateEmbed, view=view)
-        save_last_message_id(last_bot_message.id)  # Save the new message ID
+        try:
+            last_bot_message = await application_channel.send(embed=templateEmbed, view=view)
+            save_last_message_id(last_bot_message.id)
+        except discord.Forbidden:
+            print(colored("Error", "red"), "Failed to send application message embed. Missing Permissions.")
 
 
 # Run the bot
 load_dotenv()
+os.system("color")
 bot.run(os.getenv("TOKEN"))
