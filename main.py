@@ -1,4 +1,4 @@
-import discord, datetime, time, os, enum, typing
+import discord, datetime, time, os, enum, typing, json
 from dotenv import load_dotenv
 from discord import app_commands
 from discord.ext import commands
@@ -40,12 +40,20 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=intents)
+last_bot_message = None
+
 
 templateEmbed = discord.Embed(title="Whitelist Application Requirements", description=WHITELIST_APP_MESSAGE, color=0x4654c0)
-approvedEmbed = discord.Embed(title="Application Approved", color=0x72c87a)
 
+approvedEmbed = discord.Embed(title="Application Approved", color=0x72c87a)
+publicApprovedEmbed = discord.Embed(title="Application Approved ✅", color=0x72c87a)
+
+deniedEmbed = discord.Embed(title="Application Denied", color=0xe74d3c)
+publicDeniedEmbed = discord.Embed(title="Application Denied ❌", color=0xe74d3c)
 
 class ApplicationView(discord.ui.View):
+    def __init__(self) -> None:
+        super().__init__(timeout=None)
     @discord.ui.button(
               label="Apply for Whitelist", 
               style=discord.ButtonStyle.primary, 
@@ -67,7 +75,7 @@ class ApplicationView(discord.ui.View):
                 await button.response.send_message(f"Your application thread was created at <#{new_thread.id}>.",ephemeral=True)
                 await new_thread.send(embed=templateEmbed)
 
-                # Silently pings Staff Team then deletes message (will automatically open thread for all staff)
+                # # Silently pings Staff Team then deletes message (will automatically open thread for all staff)
                 # staff_ping = await new_thread.send("-# staff ping")
                 # await staff_ping.edit(content=f"<@&{STAFF_ROLE_ID}>")
                 # await new_thread.purge(limit=1)
@@ -106,13 +114,13 @@ async def approve(interaction,
                   client_type: Platforms,
                   message: typing.Optional[str] = "Welcome!"
                 ):
-        command_channel: discord.Thread = interaction.channel
+        command_channel = interaction.channel
         if interaction.user.get_role(STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == APP_CHANNEL_ID:
-            approvedEmbed.add_field(name="User", value=f"<@{user.id}>", inline=True)
-            approvedEmbed.add_field(name="Staff Member", value=f"<@{interaction.user.id}>", inline=True)
+            approvedEmbed.add_field(name="User", value=f"<@{user.id}> ({user.name})", inline=True)
+            approvedEmbed.add_field(name="Staff Member", value=f"<@{interaction.user.id}> ({interaction.user.name})", inline=True)
             approvedEmbed.add_field(name="** **", value="** **", inline=False)
-            approvedEmbed.add_field(name="Minecraft Name", value=f"`{minecraft_name}`", inline=True)
-            approvedEmbed.add_field(name="	Client", value=f"	`{client_type.name}`", inline=True)
+            approvedEmbed.add_field(name="Minecraft Name", value=f"** ** ** ** ** ** ** **`{minecraft_name}`", inline=True)
+            approvedEmbed.add_field(name="	Client", value=f"** ** ** ** ** ** ** **`{client_type.name}`", inline=True)
 
             approvedEmbed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
 
@@ -124,18 +132,19 @@ async def approve(interaction,
             await logs.send(embed=approvedEmbed)
 
             await interaction.response.send_message("Application Approved.", ephemeral=True)
-            await command_channel.send(content=f"Application Approved. {message}")
+            await command_channel.send(content=f"<@{user.id}> Application approved. {message}")
 
 
             await command_channel.edit(
                  name=f"{minecraft_name}'s application ✅",
                  locked=True,
-                 archived=True,
-                 invitable=False
+                 invitable=False,
+                 auto_archive_duration=60
                 )
             await user.edit(nick=minecraft_name)
             await user.add_roles(discord.utils.get(user.guild.roles, id=MEMBER_ROLE_ID))
-            await command_channel.remove_user(user)
+
+            # await command_channel.remove_user(user)
             
         elif interaction.user.get_role(STAFF_ROLE_ID) and not command_channel.type == discord.ChannelType.private_thread: 
              await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
@@ -145,6 +154,39 @@ async def approve(interaction,
         else:
             await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
 
+
+@bot.tree.command(name="deny", description="Deny a whitelist", guild=bot.get_guild(SERVER_ID))
+async def deny(interaction, user: discord.Member, reason: str):
+        command_channel: discord.Thread = interaction.channel
+        if interaction.user.get_role(STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == APP_CHANNEL_ID:
+            deniedEmbed.add_field(name="User", value=f"<@{user.id}> ({user.name})", inline=True)
+            deniedEmbed.add_field(name="Staff Member", value=f"<@{interaction.user.id}> ({interaction.user.name})", inline=True)
+            deniedEmbed.add_field(name="Denial Reason", value=f"{reason}", inline=False)
+
+            deniedEmbed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
+        
+            deniedEmbed.set_thumbnail(url=f"{user.avatar}")
+            deniedEmbed.timestamp = datetime.datetime.now()
+            deniedEmbed.set_footer(text=f"User ID: {interaction.user.id}")
+
+            logs = bot.get_channel(LOGS_CHANNEL_ID)
+            await logs.send(embed=deniedEmbed)
+
+            await interaction.response.send_message("Application Denied.", ephemeral=True)
+            publicDeniedEmbed.description = f"Application denied by <@{interaction.user.id}>\nReason: `{reason}`"
+
+
+            await command_channel.send(embed=publicDeniedEmbed)
+
+
+
+        elif interaction.user.get_role(STAFF_ROLE_ID) and not command_channel.type == discord.ChannelType.private_thread: 
+             await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
+        elif interaction.user.get_role(STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and not command_channel.parent_id == APP_CHANNEL_ID:
+             await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
+
+        else:
+            await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
 # ----------------------------------------------------------------------------------------------------------------------------
 
 
@@ -172,17 +214,47 @@ async def sync(context):
 
 # ----------------------------------------------------------------------------------------------------------------------------
 
+def load_last_message_id():
+    try:
+        with open('storage.json', 'r') as f:
+            data = json.load(f)
+            return data.get('last_bot_message_id', None)
+    except FileNotFoundError:
+        return None
+
+# Save last_bot_message ID to a file
+def save_last_message_id(message_id):
+    with open('storage.json', 'w') as f:
+        json.dump({'last_bot_message_id': message_id}, f)
+
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}!')
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for applications."))
+    bot.add_view(ApplicationView())
 
     channel = bot.get_channel(APP_CHANNEL_ID)
-    if channel:
-        view = ApplicationView()
-        await channel.send(embed=templateEmbed, view=view)
+    global last_bot_message
+    view = ApplicationView()
 
+    # Load the last message ID
+    last_bot_message_id = load_last_message_id()
+    if last_bot_message_id:
+        last_bot_message = await channel.fetch_message(last_bot_message_id)
 
+    # Check if the last message exists
+    if last_bot_message:
+        # Compare the content of the embed
+        if last_bot_message.embeds and last_bot_message.embeds[0].description == WHITELIST_APP_MESSAGE:
+            return  # Ignore the message
+
+        # Edit the last message with the new embed and button
+        await last_bot_message.edit(embed=templateEmbed, view=view)
+    else:
+        # Send the new message if there's no last message
+        last_bot_message = await channel.send(embed=templateEmbed, view=view)
+        save_last_message_id(last_bot_message.id)  # Save the new message ID
 
 
 # Run the bot
