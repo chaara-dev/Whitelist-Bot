@@ -127,13 +127,13 @@ async def approve(interaction,
 
 
             await interaction.channel.edit(
-                 name=f"{minecraft_name} application ✅",
+                 name=f"{minecraft_name}'s application ✅",
                  locked=True,
                  archived=True,
                  invitable=False
                 )
             await user.edit(nick=minecraft_name)
-            # await user.add_roles(MEMBER_ROLE_ID) # THIS IS BROKEN!!!!!!
+            await user.add_roles(discord.utils.get(user.guild.roles, id=MEMBER_ROLE_ID))
 
 
         else:
