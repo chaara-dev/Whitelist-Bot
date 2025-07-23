@@ -61,6 +61,7 @@ class ApplicationView(discord.ui.View):
               )
     
     async def button_callback(self, button, interaction):
+            if not button.user.get_role(MEMBER_ROLE_ID):
                 channel = bot.get_channel(APP_CHANNEL_ID)
                 new_thread = await channel.create_thread(
                     name=f"{button.user.name} application", 
@@ -93,6 +94,13 @@ class ApplicationView(discord.ui.View):
                 
                 logs = bot.get_channel(LOGS_CHANNEL_ID)
                 await logs.send(embed=logEmbed)
+            
+            elif button.user.get_role(MEMBER_ROLE_ID):
+                try:
+                    await button.response.send_message(f"You've already applied for the whitelist. If you have since been removed, please contact a\n Staff member.", ephemeral=True)
+                except:
+                    await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a Staff member.", ephemeral=True)
+                    print(colored("Error:", "red"), "Something went wrong sending [Already Applied to Whitelist] message.")
 
 
 # ----------------------------------------------------------------------------------------------------------------------------
@@ -111,6 +119,7 @@ async def approve(
                 ):
         command_channel = interaction.channel
         if interaction.user.get_role(STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == APP_CHANNEL_ID:
+            approvedEmbed.clear_fields()
             approvedEmbed.add_field(name="User", value=f"<@{user.id}> ({user.name})", inline=True)
             approvedEmbed.add_field(name="Staff Member", value=f"<@{interaction.user.id}> ({interaction.user.name})", inline=True)
             approvedEmbed.add_field(name="** **", value="** **", inline=False)
