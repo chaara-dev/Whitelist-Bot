@@ -9,12 +9,12 @@ APP_CHANNEL_ID = 1397078581435170917
 LOGS_CHANNEL_ID = 1397088020611596458
 
 WHITELIST_APP_MESSAGE = """
-- Applicant must be at least 18 years old.
-- Applicant must have read all info in ⁠:wave:︱welcome
+- Applicant **must** be at least **18 years old**.
+- Applicant **must** have read all info in <#1397454766866698270>
 - Please specify in your application whether your account is a Java or Bedrock account!
 - If you're not comfortable putting your age, thats fine. 
 - Just put "over 18" etc as the answer for age.
-- While you're waiting for your app to be reviewed, checkout our ⁠:question:︱faq
+- While you're waiting for your app to be reviewed, checkout our <#1397454766866698270>
 
 ## Whitelist Application Form:
 ```Minecraft Name: 
@@ -65,7 +65,7 @@ class ApplicationView(discord.ui.View):
                 new_thread = await channel.create_thread(
                     name=f"{button.user.name} application", 
                     message=None, 
-                    auto_archive_duration=60, 
+                    auto_archive_duration=1440, 
                     type=discord.ChannelType.private_thread, 
                     reason=None,
                     invitable=False
@@ -216,22 +216,24 @@ async def sync(context):
 
 def load_last_message_id():
     try:
-        with open('storage.json', 'r') as f:
-            data = json.load(f)
+        with open('storage/last_message_id.json', 'r') as file:
+            data = json.load(file)
             return data.get('last_bot_message_id', None)
     except FileNotFoundError:
         return None
+    except json.JSONDecodeError:
+         return None
 
 # Save last_bot_message ID to a file
 def save_last_message_id(message_id):
-    with open('storage.json', 'w') as f:
-        json.dump({'last_bot_message_id': message_id}, f)
+    with open('storage/last_message_id.json', 'w') as file:
+        json.dump({'last_bot_message_id': message_id}, file)
 
 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}!')
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for applications."))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for the keyword..."))
     bot.add_view(ApplicationView())
 
     channel = bot.get_channel(APP_CHANNEL_ID)
