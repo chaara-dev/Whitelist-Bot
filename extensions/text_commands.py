@@ -13,6 +13,10 @@ class TextCommands(commands.Cog):
             await context.send(f"Deleted {len(deleted) - 1} message(s).", delete_after=0.25)
         else:
             await context.reply(content="You can't use that command!", delete_after=2)
+    @purge.error
+    async def purge_error(self, context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await context.send("Please specify an amount of messages to delete.", delete_after=0.5)
 
     @commands.command()
     async def sync(self, context):
