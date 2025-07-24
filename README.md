@@ -4,7 +4,9 @@
 ## LIST OF THINGS TO ADD
 
 - ~~disallow members to apply~~
+
 - re-whitelist button for members to get re-added (maybe)
+
 - '/close' command to close threads [threads timeout automatically after 1 hour or 24 hours]
 
 - ~~edit old embed application message when bot start~~
@@ -15,10 +17,12 @@
     - (append user ID to list on button press, remove when denied)
     - check if a person has applied in the past, update thread to include #2, #3 etc
 
-- Add statistics for each staff member that has accepted/denied and average time
+- add statistics for each staff member that has accepted/denied and average time
     - (timestamp comparison)
 
-- /reload command to update the application file
+- ~~$reload command to update the application file~~
+
+- send whitelist commands to #mc-chat
 
 </br>
 </br>
