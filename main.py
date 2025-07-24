@@ -26,12 +26,6 @@ bot_status_list = cycle(["for the keyword...", "for new applications.", "#apply-
 
 templateEmbed = discord.Embed(title="Whitelist Application Requirements", description=constant.WHITELIST_APP_MESSAGE, color=0x4654c0)
 
-approvedEmbed = discord.Embed(title="Application Approved", color=0x72c87a)
-publicApprovedEmbed = discord.Embed(title="Application Approved ✅", color=0x72c87a)
-
-deniedEmbed = discord.Embed(title="Application Denied", color=0xe74d3c)
-publicDeniedEmbed = discord.Embed(title="Application Denied ❌", color=0xe74d3c)
-
 class ApplicationView(discord.ui.View):
     def __init__(self) -> None:
         super().__init__(timeout=None)
@@ -42,7 +36,7 @@ class ApplicationView(discord.ui.View):
               )
     
     async def button_callback(self, button, interaction):
-            if not button.user.get_role(constant.MEMBER_ROLE_ID):
+            if not button.user.get_role(constant.MEMBER_ROLE_ID) or button.user.id == constant.OWNER_ID:
                 channel = bot.get_channel(constant.APP_CHANNEL_ID)
                 new_thread = await channel.create_thread(
                     name=f"{button.user.name} application", 
@@ -84,118 +78,6 @@ class ApplicationView(discord.ui.View):
                     print(colored("Error:", "red"), "Something went wrong sending [Already Applied to Whitelist] message.")
 
 
-# ----------------------------------------------------------------------------------------------------------------------------
-# Slash Commands
-class Platforms(enum.Enum):
-     Java = 1
-     Bedrock = 2
-@bot.tree.command(name="approve", description="Approve a whitelist", guild=bot.get_guild(constant.SERVER_ID))
-@app_commands.describe(client_type="The applicant's platform")
-async def approve(
-                interaction, 
-                user: discord.Member,
-                minecraft_name: str,
-                client_type: Platforms,
-                message: typing.Optional[str] = "Welcome!"
-                ):
-        command_channel = interaction.channel
-        if interaction.user.get_role(constant.STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == constant.APP_CHANNEL_ID:
-            approvedEmbed.clear_fields()
-            approvedEmbed.add_field(name="User", value=f"<@{user.id}> ({user.name})", inline=True)
-            approvedEmbed.add_field(name="Staff Member", value=f"<@{interaction.user.id}> ({interaction.user.name})", inline=True)
-            approvedEmbed.add_field(name="** **", value="** **", inline=False)
-            approvedEmbed.add_field(name="Minecraft Name", value=f"** ** ** ** ** ** ** **`{minecraft_name}`", inline=True)
-            approvedEmbed.add_field(name="	Client", value=f"** ** ** ** ** ** ** **`{client_type.name}`", inline=True)
-
-            approvedEmbed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
-
-            approvedEmbed.set_thumbnail(url=f"{user.avatar}")
-            approvedEmbed.timestamp = datetime.datetime.now()
-            approvedEmbed.set_footer(text=f"User ID: {interaction.user.id}")
-
-            logs = await bot.get_channel(constant.LOGS_CHANNEL_ID)
-            await logs.send(embed=approvedEmbed)
-
-            await interaction.response.send_message("Application Approved.", ephemeral=True)
-            await command_channel.send(content=f"<@{user.id}> Application approved. {message}") 
-            # CHANGE TO BE publicApprovedEmbed !!!
-
-            try:
-                await command_channel.edit(
-                    name=f"{minecraft_name}'s application ✅",
-                    locked=True,
-                    invitable=False,
-                    auto_archive_duration=60
-                    )
-            except discord.Forbidden:
-                print(colored("Error:", "red"), f"Could not edit thread. Missing Permissions.")
-            except discord.HTTPException:
-                print(colored("Error:", "red"), f"Failed to edit thread.")
-            
-
-            try:
-                await user.edit(nick=minecraft_name)
-            except discord.errors.Forbidden:
-                print(colored("Error:", "red"), "Could not change nickname. Missing Permissions.")
-                await logs.send(f"❗ Failed to change **{user.name}**'s nickname. Missing Permissions.")
-
-            try:
-                member_role = discord.utils.get(user.guild.roles, id=constant.MEMBER_ROLE_ID)
-                await user.add_roles(member_role)
-            except discord.Forbidden:
-                print(colored("Error:", "red"), f"Error adding {member_role.name} role to {user.name}. Missing Permissions.")
-                await logs.send(f"❗ Failed to add **{member_role.name}** role to **{user.name}**. Missing Permissions.")
-            except discord.HTTPException:
-                print(colored("Error:", "red"), f"Failed to add role to {user.name}.")
-            
-        elif interaction.user.get_role(constant.STAFF_ROLE_ID) and not command_channel.type == discord.ChannelType.private_thread: 
-             await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
-        elif interaction.user.get_role(constant.STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and not command_channel.parent_id == constant.APP_CHANNEL_ID:
-             await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
-
-        else:
-            await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
-
-
-@bot.tree.command(name="deny", description="Deny a whitelist", guild=bot.get_guild(constant.SERVER_ID))
-async def deny(
-            interaction, 
-            user: discord.Member,
-            reason: str
-            ):
-        command_channel: discord.Thread = interaction.channel
-        if interaction.user.get_role(constant.STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == constant.APP_CHANNEL_ID:
-            deniedEmbed.add_field(name="User", value=f"<@{user.id}> ({user.name})", inline=True)
-            deniedEmbed.add_field(name="Staff Member", value=f"<@{interaction.user.id}> ({interaction.user.name})", inline=True)
-            deniedEmbed.add_field(name="Denial Reason", value=f"{reason}", inline=False)
-
-            deniedEmbed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
-        
-            deniedEmbed.set_thumbnail(url=f"{user.avatar}")
-            deniedEmbed.timestamp = datetime.datetime.now()
-            deniedEmbed.set_footer(text=f"User ID: {interaction.user.id}")
-
-            logs = bot.get_channel(constant.LOGS_CHANNEL_ID)
-            await logs.send(embed=deniedEmbed)
-
-            await interaction.response.send_message("Application Denied.", ephemeral=True)
-            publicDeniedEmbed.description = f"Application denied by <@{interaction.user.id}>\nReason: `{reason}`"
-
-
-            await command_channel.send(embed=publicDeniedEmbed)
-
-
-
-        elif interaction.user.get_role(constant.STAFF_ROLE_ID) and not command_channel.type == discord.ChannelType.private_thread: 
-             await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
-        elif interaction.user.get_role(constant.STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and not command_channel.parent_id == constant.APP_CHANNEL_ID:
-             await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
-
-        else:
-            await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
-# ----------------------------------------------------------------------------------------------------------------------------
-
-
 def load_last_message_id():
     try:
         with open('storage/last_message_id.json', 'r') as file:
@@ -223,7 +105,12 @@ async def update_bot_status():
 @bot.event
 async def on_ready():
     await bot.load_extension("extensions.text_commands")
-    print("Extension:", colored("text_commands", "yellow"), "loaded.")
+    print("Extension:", colored("text_commands.py", "yellow"), "loaded.")
+
+    await bot.load_extension("extensions.slash_commands")
+    print("Extension:", colored("slash_commands.py", "yellow"), "loaded.")
+
+
     print(f"Logged in as", colored(f"{bot.user.name}", "green") + "!")
     bot.add_view(ApplicationView())
 
