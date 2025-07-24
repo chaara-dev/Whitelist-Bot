@@ -240,7 +240,7 @@ async def on_ready():
                 last_bot_message_id = application_channel.fetch_message(searched_message.id)
 
     if last_application_message is not None:
-        if last_application_message.embeds[0].description == constant.WHITELIST_APP_MESSAGE:
+        if last_application_message.embeds and last_application_message.embeds[0].description == constant.WHITELIST_APP_MESSAGE:
             return 
 
         await last_application_message.edit(embed=templateEmbed, view=view)
