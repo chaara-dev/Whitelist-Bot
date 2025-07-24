@@ -1,5 +1,13 @@
-import discord, datetime, time, os, enum, typing, json
+import discord
+import datetime
+import time
+import os
+import enum
+import typing
+import json
+
 import storage.constants as constant
+
 from dotenv import load_dotenv
 from discord import app_commands
 from discord.ext import commands, tasks
@@ -13,7 +21,7 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=intents)
 last_application_message = None
-bot_status_list = cycle(["for the keyword...", "for new applications."])
+bot_status_list = cycle(["for the keyword...", "for new applications.", "#apply-here"])
 
 
 templateEmbed = discord.Embed(title="Whitelist Application Requirements", description=constant.WHITELIST_APP_MESSAGE, color=0x4654c0)
@@ -105,7 +113,7 @@ async def approve(
             approvedEmbed.timestamp = datetime.datetime.now()
             approvedEmbed.set_footer(text=f"User ID: {interaction.user.id}")
 
-            logs = bot.get_channel(constant.LOGS_CHANNEL_ID)
+            logs = await bot.get_channel(constant.LOGS_CHANNEL_ID)
             await logs.send(embed=approvedEmbed)
 
             await interaction.response.send_message("Application Approved.", ephemeral=True)
@@ -129,14 +137,14 @@ async def approve(
                 await user.edit(nick=minecraft_name)
             except discord.errors.Forbidden:
                 print(colored("Error:", "red"), "Could not change nickname. Missing Permissions.")
-                logs.send(f"❗ Failed to change **{user.name}**'s nickname. Missing Permissions.")
+                await logs.send(f"❗ Failed to change **{user.name}**'s nickname. Missing Permissions.")
 
             try:
                 member_role = discord.utils.get(user.guild.roles, id=constant.MEMBER_ROLE_ID)
                 await user.add_roles(member_role)
             except discord.Forbidden:
                 print(colored("Error:", "red"), f"Error adding {member_role.name} role to {user.name}. Missing Permissions.")
-                logs.send(f"❗ Failed to add **{member_role.name}** role to **{user.name}**. Missing Permissions.")
+                await logs.send(f"❗ Failed to add **{member_role.name}** role to **{user.name}**. Missing Permissions.")
             except discord.HTTPException:
                 print(colored("Error:", "red"), f"Failed to add role to {user.name}.")
             
@@ -188,30 +196,6 @@ async def deny(
 # ----------------------------------------------------------------------------------------------------------------------------
 
 
-# ----------------------------------------------------------------------------------------------------------------------------
-# Text Commands
-@bot.command()
-async def purge(context, amount: int):
-    if context.author.id == constant.OWNER_ID:
-        deleted = await context.channel.purge(limit=amount + 1)
-        await context.send(f"Deleted {len(deleted) - 1} message(s).", delete_after=0.25)
-    else:
-        await context.reply(content="You can't use that command!", delete_after=2)
-
-@bot.command()
-async def sync(context):
-        if context.author.id == constant.OWNER_ID:
-            await bot.tree.sync()
-            print("Syncing...")
-            await context.send("Command tree synced.")
-            print("Synced.")
-            await context.channel.purge(limit=2)
-            
-        else:
-            await context.send(content="You must be the owner to use this command.", delete_after=2)
-
-# ----------------------------------------------------------------------------------------------------------------------------
-
 def load_last_message_id():
     try:
         with open('storage/last_message_id.json', 'r') as file:
@@ -226,18 +210,20 @@ def save_last_message_id(message_id):
     with open('storage/last_message_id.json', 'w') as file:
         json.dump({'last_bot_message_id': message_id}, file)
 
-@tasks.loop(minutes=30)
+@tasks.loop(hours=2)
 async def update_bot_status():
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.watching, 
-            name=next(bot_status_list)), 
+            name=next(bot_status_list)
+        ), 
         status=discord.Status.idle
         )
 
-
 @bot.event
 async def on_ready():
+    await bot.load_extension("extensions.text_commands")
+    print("Extension:", colored("text_commands", "yellow"), "loaded.")
     print(f"Logged in as", colored(f"{bot.user.name}", "green") + "!")
     bot.add_view(ApplicationView())
 
@@ -270,6 +256,4 @@ async def on_ready():
 
 load_dotenv()
 os.system("color")
-
-if __name__ == "__main__":
-    bot.run(os.getenv("TOKEN"))
+bot.run(os.getenv("TOKEN"))
