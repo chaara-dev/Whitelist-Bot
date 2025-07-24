@@ -111,7 +111,7 @@ class SlashCommands(commands.Cog):
                 deniedEmbed.add_field(name="Staff Member", value=f"<@{interaction.user.id}> ({interaction.user.name})", inline=True)
                 deniedEmbed.add_field(name="Denial Reason", value=f"{reason}", inline=False)
                 deniedEmbed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
-                deniedEmbed.set_thumbnail(url=f"{user.avatar}")
+                deniedEmbed.set_thumbnail(url=f"{interaction.user.avatar}")
                 deniedEmbed.set_footer(text=f"User ID: {interaction.user.id}")
                 deniedEmbed.timestamp = datetime.datetime.now()
 
