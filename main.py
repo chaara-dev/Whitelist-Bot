@@ -237,7 +237,7 @@ async def on_ready():
             last_application_message = await application_channel.fetch_message(last_bot_message_id)
         except discord.NotFound:
             async for searched_message in application_channel.history(limit=1):
-                last_bot_message_id = application_channel.fetch_message(searched_message.id)
+                last_bot_message_id = await application_channel.fetch_message(searched_message.id)
 
     if last_application_message is not None:
         if last_application_message.embeds and last_application_message.embeds[0].description == constant.WHITELIST_APP_MESSAGE:
