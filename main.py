@@ -15,26 +15,20 @@ from discord.ui import Button, View
 from termcolor import colored
 from itertools import cycle
 
-
+# Discord API
 intents = discord.Intents.default()
 intents.message_content = True
-
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=intents)
-last_application_message = None
+
+# Variables
 bot_status_list = cycle(["for the keyword...", "for new applications.", "#apply-here"])
-
-
 templateEmbed = discord.Embed(title="Whitelist Application Requirements", description=constant.WHITELIST_APP_MESSAGE, color=0x4654c0)
 
 class ApplicationView(discord.ui.View):
     def __init__(self) -> None:
         super().__init__(timeout=None)
-    @discord.ui.button(
-              label="Apply for Whitelist", 
-              style=discord.ButtonStyle.primary, 
-              custom_id="whitelist_button"
-              )
-    
+
+    @discord.ui.button(label="Apply for Whitelist", style=discord.ButtonStyle.primary, custom_id="whitelist_button")
     async def button_callback(self, button, interaction):
             if not button.user.get_role(constant.MEMBER_ROLE_ID) or button.user.id == constant.OWNER_ID:
                 channel = bot.get_channel(constant.APP_CHANNEL_ID)
@@ -77,7 +71,6 @@ class ApplicationView(discord.ui.View):
                     await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a Staff member.", ephemeral=True)
                     print(colored("Error:", "red"), "Something went wrong sending [Already Applied to Whitelist] message.")
 
-
 def load_last_message_id():
     try:
         with open('storage/last_message_id.json', 'r') as file:
@@ -102,23 +95,12 @@ async def update_bot_status():
         status=discord.Status.idle
         )
 
-@bot.event
-async def on_ready():
-    await bot.load_extension("extensions.text_commands")
-    print("Extension:", colored("text_commands.py", "yellow"), "loaded.")
-
-    await bot.load_extension("extensions.slash_commands")
-    print("Extension:", colored("slash_commands.py", "yellow"), "loaded.")
-
-
-    print(f"Logged in as", colored(f"{bot.user.name}", "green") + "!")
-    bot.add_view(ApplicationView())
-
-    # Logic for updating embedded Application template message (collapsible)
+async def update_embed_message():
+    last_application_message = None
     application_channel = bot.get_channel(constant.APP_CHANNEL_ID)
-    global last_application_message
     view = ApplicationView()
     last_bot_message_id = load_last_message_id()
+
     if last_bot_message_id is not None:
         try:
             last_application_message = await application_channel.fetch_message(last_bot_message_id)
@@ -138,6 +120,19 @@ async def on_ready():
         except discord.Forbidden:
             print(colored("Error", "red"), "Failed to send application message embed. Missing Permissions.")
 
+@bot.event
+async def on_ready():
+    await bot.load_extension("extensions.text_commands")
+    print("Extension:", colored("text_commands.py", "yellow"), "loaded.")
+
+    await bot.load_extension("extensions.slash_commands")
+    print("Extension:", colored("slash_commands.py", "yellow"), "loaded.")
+
+
+    print(f"Logged in as", colored(f"{bot.user.name}", "green") + "!")
+    bot.add_view(ApplicationView())
+
+    await update_embed_message()
     update_bot_status.start()
 
 
