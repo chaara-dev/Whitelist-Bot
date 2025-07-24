@@ -49,9 +49,9 @@ class ApplicationView(discord.ui.View):
 
 
                 logEmbed = discord.Embed(title="Application Created",
-                                         description=f"**User**\n<@{button.user.id}>",
-                                         color=0x4654c0,
-                                         timestamp=datetime.datetime.now()
+                                        description=f"**User**\n<@{button.user.id}>",
+                                        color=0x4654c0,
+                                        timestamp=datetime.datetime.now()
                                         )
                 logEmbed.add_field(
                     name="Thread Link",
