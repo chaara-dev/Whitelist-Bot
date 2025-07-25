@@ -18,18 +18,23 @@ class SlashCommands(commands.Cog):
         Bedrock = 2
 
 
-    async def name_and_role(self, user, minecraft_name, member_role):
+    async def name_and_role(self, user, minecraft_name, role):
+        nick_success = None 
+        role_success = None
         try:
             await user.edit(nick=minecraft_name)
             nick_success = True
         except:
             nick_success = False
 
-        try:
-            await user.add_roles(member_role)
+        if user.get_role(constant.MEMBER_ROLE_ID):
             role_success = True
-        except:
-            role_success = False
+        else:
+            # try:
+                await user.add_roles(role)
+                role_success = True
+            # except:
+                role_success = False
 
 
         if nick_success and role_success:
@@ -40,6 +45,16 @@ class SlashCommands(commands.Cog):
             return "✅Application Approved.\n`❗Failed to change nickname.`"
         else:
             return "✅Application Approved.\n`❗Failed to change nickname.\n❗Failed to add member role.`"
+
+
+    async def add_to_whitelist(self, minecraft_name, client_type):
+
+        if client_type == self.Platforms.Java:
+            return f"!c whitelist add {minecraft_name}"
+        elif client_type == self.Platforms.Bedrock:
+            return f"!c fwhitelist add {minecraft_name}"
+        else:
+            return "Something went wrong."
 
 
     @app_commands.command(name="approve", description="Approve a whitelist.")
@@ -55,6 +70,8 @@ class SlashCommands(commands.Cog):
 
             command_channel = interaction.channel
             log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
+            chat_channel = self.bot.get_channel(constant.CHAT_CHANNEL_ID)
+            member_role = interaction.guild.get_role(constant.MEMBER_ROLE_ID)
             approvedEmbed = discord.Embed(title="Application Approved", color=0x72c87a)
             publicApprovedEmbed = discord.Embed(title="✅ Application Approved", color=0x72c87a)
 
@@ -84,7 +101,9 @@ class SlashCommands(commands.Cog):
                     log_channel.send(f"Something went wrong editing <#{command_channel.id}>")
                 
 
-                status = await self.name_and_role(user, minecraft_name, constant.MEMBER_ROLE_ID)
+
+                await chat_channel.send(self.add_to_whitelist(minecraft_name, client_type))
+                status = await self.name_and_role(user, minecraft_name, member_role)
                 await interaction.response.send_message(f"{status}", ephemeral=True)
                 
             # if user IS staff AND command IS NOT used in private thread:
@@ -107,11 +126,12 @@ class SlashCommands(commands.Cog):
                 reason: str
                 ):
 
-            command_channel: discord.Thread = interaction.channel
+            command_channel = interaction.channel
             log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
             deniedEmbed = discord.Embed(title="Application Denied", color=0xe74d3c)
             publicDeniedEmbed = discord.Embed(title="❌ Application Denied", color=0xe74d3c)
 
+            # if user IS staff AND command IS used in private thread AND private thread parent IS #apply-here:
             if interaction.user.get_role(constant.STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == constant.APP_CHANNEL_ID:
                 deniedEmbed.add_field(name="User", value=f"<@{user.id}> ({user.name})", inline=True)
                 deniedEmbed.add_field(name="Staff Member", value=f"<@{interaction.user.id}> ({interaction.user.name})", inline=True)
@@ -129,11 +149,14 @@ class SlashCommands(commands.Cog):
                 await log_channel.send(embed=deniedEmbed)
             
             
+            # if user IS staff AND command IS NOT used in private thread:
             elif interaction.user.get_role(constant.STAFF_ROLE_ID) and not command_channel.type == discord.ChannelType.private_thread: 
                 await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
+            # if user IS staff AND command IS used in private thread AND private thread parent IS NOT #apply-here:
             elif interaction.user.get_role(constant.STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and not command_channel.parent_id == constant.APP_CHANNEL_ID:
                 await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
 
+            # else user IS NOT staff
             else:
                 await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
 
@@ -147,11 +170,12 @@ class SlashCommands(commands.Cog):
                         minecraft_name: str,
                         client_type: Platforms
                         ):
-    
+
             command_channel = interaction.channel
             log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
+            chat_channel = self.bot.get_channel(constant.CHAT_CHANNEL_ID)
+            member_role = interaction.guild.get_role(constant.MEMBER_ROLE_ID)
             approvedEmbed = discord.Embed(title="Application Quick Approved", color=0x72c87a)
-            member_role = discord.utils.get(user.guild.roles, id=constant.MEMBER_ROLE_ID)
 
             if interaction.user.get_role(constant.STAFF_ROLE_ID):
                 approvedEmbed.clear_fields()
@@ -164,18 +188,19 @@ class SlashCommands(commands.Cog):
                 approvedEmbed.set_footer(text=f"User ID: {interaction.user.id}")
                 approvedEmbed.timestamp = datetime.datetime.now()
 
-                await command_channel.send(f"<@{user.id}> has been added to the whitelist.")
+
+                await chat_channel.send(await self.add_to_whitelist(minecraft_name, client_type))
+                await command_channel.send(f"**{minecraft_name}** has been added to the whitelist.")
                 await log_channel.send(embed=approvedEmbed)
 
-
-                status = await self.name_and_role(user, minecraft_name, constant.MEMBER_ROLE_ID)
+                status = await self.name_and_role(user, minecraft_name, member_role)
                 await interaction.response.send_message(f"{status}", ephemeral=True)
 
             else:
                 await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
 
 
-
+    # add a /close command here
 
 async def setup(bot):
     await bot.add_cog(SlashCommands(bot))
