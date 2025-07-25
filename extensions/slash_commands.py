@@ -30,12 +30,11 @@ class SlashCommands(commands.Cog):
         if user.get_role(constant.MEMBER_ROLE_ID):
             role_success = True
         else:
-            # try:
+            try:
                 await user.add_roles(role)
                 role_success = True
-            # except:
+            except:
                 role_success = False
-
 
         if nick_success and role_success:
             return "✅Application Approved."
@@ -48,7 +47,6 @@ class SlashCommands(commands.Cog):
 
 
     async def add_to_whitelist(self, minecraft_name, client_type):
-
         if client_type == self.Platforms.Java:
             return f"!c whitelist add {minecraft_name}"
         elif client_type == self.Platforms.Bedrock:

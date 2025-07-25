@@ -5,9 +5,9 @@
 ```diff
 - disallow members to apply
 
--+ re-whitelist button for members to get re-added (maybe) +-
++ re-whitelist button for members to get re-added (maybe)
 
-+ /close command to close threads [threads timeout automatically after 24 hours (new) or 1 hour (approved)] (maybe)
++ '/close' command to close threads [threads timeout automatically after 24 hours (new) or 1 hour (approved)] (maybe)
 
 - edit old embed application message when bot start
 
@@ -23,17 +23,20 @@
 +   timestamp comparison between start application and accept/deny application
 +   user id tracking
 
-+ Move embed message for application from constants.py to json storage
-+   $reload command to update the application file somehow
+- Move embed message for application from constants.py to text file storage
+-   '$reload' command to update the application file somehow
+
 
 - send whitelist commands to #mc-chat
 
-+ add ping role for available to accept
++ add ping role for 'available to accept'
 
 + add ping after X hours as reminder to approve (maybe)
 
-+ split ApplicationView() into multiple smaller functions
-+   also do the same for the /approve commands
++ split ApplicationView() into multiple smaller functions to read and edit better
++   also do the same for the '/approve' and '/deny' commands - remove lots of duplicate code
+
++ look into using sqlite for storage instead -> better integration into existing barebones database?
 ```
 </br>
 </br>
