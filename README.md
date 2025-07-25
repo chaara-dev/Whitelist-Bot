@@ -1,29 +1,40 @@
 ## [[Invite Bot]](https://discord.com/oauth2/authorize?client_id=1397280746946822354&permissions=1496930446352&integration_type=0&scope=applications.commands+bot)
 
 
-## LIST OF THINGS TO ADD
+## To-Do List
+```diff
+- disallow members to apply
 
-- ~~disallow members to apply~~
+-+ re-whitelist button for members to get re-added (maybe) +-
 
-- re-whitelist button for members to get re-added (maybe)
++ /close command to close threads [threads timeout automatically after 24 hours (new) or 1 hour (approved)] (maybe)
 
-- '/close' command to close threads [threads timeout automatically after 1 hour or 24 hours]
+- edit old embed application message when bot start
 
-- ~~edit old embed application message when bot start~~
+! add try/except methods to things that can break (WIP)
 
-- add try/except methods to things that can break
++ don't let people with open applications apply again 
++   (append user ID to list/json on button press, remove when denied)
++   check if a person has applied in the past, update thread to include #2, #3 etc
 
-- don't let people with open applications apply again 
-    - (append user ID to list on button press, remove when denied)
-    - check if a person has applied in the past, update thread to include #2, #3 etc
+- add way to whitelist people with no application thread
 
-- add statistics for each staff member that has accepted/denied and average time
-    - (timestamp comparison)
++ add statistics for each staff member that has accepted/denied and average time
++   timestamp comparison between start application and accept/deny application
++   user id tracking
 
-- ~~$reload command to update the application file~~
++ Move embed message for application from constants.py to json storage
++   $reload command to update the application file somehow
 
 - send whitelist commands to #mc-chat
 
++ add ping role for available to accept
+
++ add ping after X hours as reminder to approve (maybe)
+
++ split ApplicationView() into multiple smaller functions
++   also do the same for the /approve commands
+```
 </br>
 </br>
 </br>
