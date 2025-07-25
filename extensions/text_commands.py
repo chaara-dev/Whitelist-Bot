@@ -8,7 +8,7 @@ class TextCommands(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def reload(self, context):
+    async def extensions(self, context):
         if context.author.id == constant.OWNER_ID:
             await self.bot.reload_extension("extensions.text_commands")
             print("Extension:", colored("text_commands.py", "yellow"), "reloaded.")
