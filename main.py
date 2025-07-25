@@ -2,14 +2,11 @@ import discord
 import datetime
 import time
 import os
-import enum
-import typing
 import json
 
 import storage.constants as constant
 
 from dotenv import load_dotenv
-from discord import app_commands
 from discord.ext import commands, tasks
 from discord.ui import Button, View
 from termcolor import colored
@@ -21,7 +18,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=intents)
 
 # Variables
-bot_status_list = cycle(["for the keyword...", "for new applications.", "#apply-here"])
+bot_status_list = cycle(["for the keyword...", "for new applications.", "#apply-here", "your backs", "the minecrafters"])
 templateEmbed = discord.Embed(title="Whitelist Application Requirements", description=constant.WHITELIST_APP_MESSAGE, color=0x4654c0)
 
 class ApplicationView(discord.ui.View):
@@ -71,21 +68,21 @@ class ApplicationView(discord.ui.View):
                     await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a Staff member.", ephemeral=True)
                     print(colored("Error:", "red"), "Something went wrong sending [Already Applied to Whitelist] message.")
 
-def load_last_message_id():
+def load_stored_message():
     try:
-        with open('storage/last_message_id.json', 'r') as file:
+        with open('storage/message_id.json', 'r') as file:
             data = json.load(file)
-            return data.get('last_bot_message_id', None)
+            return data.get('message_id', None)
     except FileNotFoundError:
         return None
     except json.JSONDecodeError:
-         return None
+        return None
 
-def save_last_message_id(message_id):
-    with open('storage/last_message_id.json', 'w') as file:
-        json.dump({'last_bot_message_id': message_id}, file)
+def store_message(message_id):
+    with open('storage/message_id.json', 'w') as file:
+        json.dump({'message_id': message_id}, file)
 
-@tasks.loop(hours=2)
+@tasks.loop(seconds=30)
 async def update_bot_status():
     await bot.change_presence(
         activity=discord.Activity(
@@ -96,29 +93,34 @@ async def update_bot_status():
         )
 
 async def update_embed_message():
-    last_application_message = None
+    last_embed_message = None
     application_channel = bot.get_channel(constant.APP_CHANNEL_ID)
     view = ApplicationView()
-    last_bot_message_id = load_last_message_id()
+    stored_message = load_stored_message()
 
-    if last_bot_message_id is not None:
+    if stored_message is not None:
         try:
-            last_application_message = await application_channel.fetch_message(last_bot_message_id)
+            last_embed_message = await application_channel.fetch_message(stored_message)
         except discord.NotFound:
-            async for searched_message in application_channel.history(limit=1):
-                last_bot_message_id = await application_channel.fetch_message(searched_message.id)
+            async for searched_message in application_channel.history(limit=5):
+                if searched_message.embeds and searched_message.author == bot.user:
+                    try:
+                        last_embed_message = await application_channel.fetch_message(searched_message.id)
+                    except:
+                        last_embed_message = None
 
-    if last_application_message is not None:
-        if last_application_message.embeds and last_application_message.embeds[0].description == constant.WHITELIST_APP_MESSAGE:
+    if last_embed_message is not None:
+        if last_embed_message.embeds and last_embed_message.embeds[0].description == constant.WHITELIST_APP_MESSAGE:
             return 
-
-        await last_application_message.edit(embed=templateEmbed, view=view)
+        else:
+            await last_embed_message.edit(embed=templateEmbed, view=view)
     else:
         try:
-            last_application_message = await application_channel.send(embed=templateEmbed, view=view)
-            save_last_message_id(last_application_message.id)
+            last_embed_message = await application_channel.send(embed=templateEmbed, view=view)
         except discord.Forbidden:
             print(colored("Error", "red"), "Failed to send application message embed. Missing Permissions.")
+
+    store_message(last_embed_message.id)
 
 @bot.event
 async def on_ready():
