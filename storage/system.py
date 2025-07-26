@@ -1,9 +1,9 @@
-from discord.ext import commands
+from discord import app_commands
 
 class CustomErrors():
-    class UserIsNotStaff(commands.CheckFailure):
+    class UserIsNotStaff(app_commands.CheckFailure):
         pass # error to handle user missing staff role
-    class InvalidCommandChannel(commands.CheckFailure):
+    class InvalidCommandChannel(app_commands.CheckFailure):
         pass #error to handle command used in incorrect channel
 
 class Constants():
