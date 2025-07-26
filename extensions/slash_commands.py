@@ -20,10 +20,10 @@ class SlashCommands(commands.Cog):
 
     # check if command user is Staff
     def user_is_staff():
-            def predicate(interaction: discord.Interaction) -> bool:
+            async def predicate(interaction: discord.Interaction) -> bool:
                 staff_role = interaction.user.get_role(constant.STAFF_ROLE_ID)
                 if staff_role is None:
-                    raise c_error.UserIsNotStaff()
+                    raise c_error.UserIsNotStaff("You don't have permission to use that command.")
                 return True
             return app_commands.check(predicate)
     # check if command used in valid channel
@@ -31,7 +31,7 @@ class SlashCommands(commands.Cog):
         def predicate(interaction: discord.Interaction) -> bool:
             valid_channel = bool(interaction.channel.type == discord.ChannelType.private_thread and interaction.channel.parent_id == constant.APP_CHANNEL_ID)
             if valid_channel is False:
-                raise c_error.InvalidCommandChannel()
+                raise c_error.InvalidCommandChannel("You're in the wrong channel for that command!")
             return True
         return app_commands.check(predicate)
     # change nickname and add member role
@@ -108,7 +108,7 @@ class SlashCommands(commands.Cog):
                 await log_channel.send(embed=approved_embed)
                 await command_channel.edit(name=f"✅ {minecraft_name}'s application", locked=True, invitable=False, auto_archive_duration=60)
 
-                await chat_channel.send(self.run_whitelist_command(minecraft_name, client_type))
+                await chat_channel.send(await self.run_whitelist_command(minecraft_name, client_type))
                 user_update_status = await self.update_user(user, minecraft_name, member_role)
                 await interaction.response.send_message(f"{user_update_status}", ephemeral=True)
     # handle if command is used (by not staff) | (in wrong channel or thread)
@@ -140,11 +140,11 @@ class SlashCommands(commands.Cog):
             await log_channel.send(embed=deniedEmbed)
     # handle if command is used (by not staff) | (in wrong channel or thread)
     @deny.error
-    async def deny_error(self, interaction, err):
-        if isinstance(err, c_error.InvalidCommandChannel):
-            await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
-        elif isinstance(err, c_error.UserIsNotStaff):
-            await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
+    async def deny_error(self, interaction, error):
+        if isinstance(error, c_error.InvalidCommandChannel):
+            await interaction.response.send_message(error, ephemeral=True)
+        elif isinstance(error, c_error.UserIsNotStaff):
+            await interaction.response.send_message(error, ephemeral=True)
 
 
     # approve a whitelist application without being in application thread
@@ -166,15 +166,12 @@ class SlashCommands(commands.Cog):
             await chat_channel.send(await self.run_whitelist_command(minecraft_name, client_type))
             await log_channel.send(embed=approvedEmbed)
             await command_channel.send(f"**{minecraft_name}** has been added to the whitelist.")
-            
     # handle if command is used by not staff
     @quickapprove.error
     async def quickapprove_error(self, interaction, error):
         if isinstance(error, c_error.UserIsNotStaff):
-            await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
+            await interaction.response.send_message(error, ephemeral=True)
 
-
-    # check why upser_update_status always both true
 
     # lock and close an open application thread
     @app_commands.command(name="close-thread", description="Close an old or reopened application thread.")
