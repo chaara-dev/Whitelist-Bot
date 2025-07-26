@@ -12,50 +12,57 @@ from discord.ext import commands
 class SlashCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
     class Platforms(enum.Enum):
         Java = 1
         Bedrock = 2
 
-
-    async def name_and_role(self, user, minecraft_name, role):
+    # check if command user is Staff
+    def user_is_staff():
+            def predicate(interaction: discord.Interaction) -> bool:
+                return interaction.user.get_role(constant.STAFF_ROLE_ID)
+            return app_commands.check(predicate)
+    # check if command used in valid channel
+    def used_in_valid_channel():
+        def predicate(interaction: discord.Interaction) -> bool:
+            return interaction.channel.type == discord.ChannelType.private_thread and interaction.channel.parent_id == constant.APP_CHANNEL_ID
+        return app_commands.check(predicate)
+    # change nickname and add member role
+    async def update_user(self, user, minecraft_name, role):
         nick_success = None 
         role_success = None
-        try:
-            await user.edit(nick=minecraft_name)
-            nick_success = True
-        except:
-            nick_success = False
+        
+        try: await user.edit(nick=minecraft_name), nick_success = True
+        except: nick_success = False
 
-        if user.get_role(constant.MEMBER_ROLE_ID):
-            role_success = True
-        else:
-            try:
-                await user.add_roles(role)
-                role_success = True
-            except:
-                role_success = False
+        if user.get_role(constant.MEMBER_ROLE_ID): role_success = True
+        else: 
+            try: await user.add_roles(role), role_success = True
+            except: role_success = False
 
-        if nick_success and role_success:
-            return "✅Application Approved."
-        elif nick_success and not role_success:
-            return "✅Application Approved.\n`❗Failed to add member role.`"
-        elif not nick_success and role_success:
-            return "✅Application Approved.\n`❗Failed to change nickname.`"
-        else:
-            return "✅Application Approved.\n`❗Failed to change nickname.\n❗Failed to add member role.`"
+        if nick_success and role_success: return "✅Application Approved."
+        elif nick_success and not role_success: return "✅Application Approved.\n`❗Failed to add member role.`"
+        elif not nick_success and role_success: return "✅Application Approved.\n`❗Failed to change nickname.`"
+        else: return "✅Application Approved.\n`❗Failed to change nickname.\n❗Failed to add member role.`"
+    # run commands to add member to whitelist
+    async def run_whitelist_command(self, minecraft_name, client_type):
+        if client_type == self.Platforms.Java: return f"!c whitelist add {minecraft_name}"
+        elif client_type == self.Platforms.Bedrock: return f"!c fwhitelist add {minecraft_name}"
+        else: return "Something went wrong."
+    # populate discord embed with details about approved user
+    async def fill_embed(self, interaction, user, minecraft_name, client_type):
+        embed = discord.Embed(color=0x72c87a)
+        embed.clear_fields()
+        
+        embed.add_field(name="User", value=f"<@{user.id}> ({user.name})", inline=True)
+        embed.add_field(name="Staff Member", value=f"<@{interaction.user.id}> ({interaction.user.name})", inline=True)
+        embed.add_field(name="** **", value="** **", inline=False)
+        embed.add_field(name="Minecraft Name", value=f"** ** ** ** ** ** ** **`{minecraft_name}`", inline=True)
+        embed.add_field(name="	Client", value=f"** ** ** ** ** ** ** **`{client_type.name}`", inline=True)
+        embed.set_thumbnail(url=f"{user.avatar}")
+        embed.set_footer(text=f"User ID: {interaction.user.id}")
+        embed.timestamp = datetime.datetime.now()
 
-
-    async def add_to_whitelist(self, minecraft_name, client_type):
-        if client_type == self.Platforms.Java:
-            return f"!c whitelist add {minecraft_name}"
-        elif client_type == self.Platforms.Bedrock:
-            return f"!c fwhitelist add {minecraft_name}"
-        else:
-            return "Something went wrong."
-
-
-    @app_commands.command(name="approve", description="Approve a whitelist.")
+        return embed
     @app_commands.describe(client_type="The applicant's platform.")
     async def approve(
                     self,
