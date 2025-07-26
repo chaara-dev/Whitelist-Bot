@@ -63,64 +63,41 @@ class SlashCommands(commands.Cog):
         embed.timestamp = datetime.datetime.now()
 
         return embed
+
+
+    # approve a whitelist application inside private thread
+    @app_commands.command(name="approve", description="Approve a whitelist application.")
     @app_commands.describe(client_type="The applicant's platform.")
-    async def approve(
-                    self,
-                    interaction, 
-                    user: discord.Member,
-                    minecraft_name: str,
-                    client_type: Platforms,
-                    message: typing.Optional[str] = "Welcome!"
-                    ):
+    @user_is_staff()
+    @used_in_valid_channel()
+    async def approve(self, interaction, user: discord.Member, minecraft_name: str, client_type: Platforms, message: typing.Optional[str] = "Welcome!"):
+                command_channel = interaction.channel
+                log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
+                chat_channel = self.bot.get_channel(constant.CHAT_CHANNEL_ID)
+                member_role = interaction.guild.get_role(constant.MEMBER_ROLE_ID)
 
-            command_channel = interaction.channel
-            log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
-            chat_channel = self.bot.get_channel(constant.CHAT_CHANNEL_ID)
-            member_role = interaction.guild.get_role(constant.MEMBER_ROLE_ID)
-            approvedEmbed = discord.Embed(title="Application Approved", color=0x72c87a)
-            publicApprovedEmbed = discord.Embed(title="✅ Application Approved", color=0x72c87a)
-
-            # if user IS staff AND command IS used in private thread AND private thread parent IS #apply-here:
-            if interaction.user.get_role(constant.STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == constant.APP_CHANNEL_ID:
-                approvedEmbed.clear_fields()
-                approvedEmbed.add_field(name="User", value=f"<@{user.id}> ({user.name})", inline=True)
-                approvedEmbed.add_field(name="Staff Member", value=f"<@{interaction.user.id}> ({interaction.user.name})", inline=True)
-                approvedEmbed.add_field(name="** **", value="** **", inline=False)
-                approvedEmbed.add_field(name="Minecraft Name", value=f"** ** ** ** ** ** ** **`{minecraft_name}`", inline=True)
-                approvedEmbed.add_field(name="	Client", value=f"** ** ** ** ** ** ** **`{client_type.name}`", inline=True)
-                approvedEmbed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
-                approvedEmbed.set_thumbnail(url=f"{user.avatar}")
-                approvedEmbed.set_footer(text=f"User ID: {interaction.user.id}")
-                approvedEmbed.timestamp = datetime.datetime.now()
-
-                publicApprovedEmbed.description = f"Client Type: **{client_type.name}**\nMinecraft Name: **{minecraft_name}**\n\n{message}"
-                publicApprovedEmbed.timestamp = datetime.datetime.now()
-
-                await command_channel.send(embed=publicApprovedEmbed)
-                await log_channel.send(embed=approvedEmbed)
-
-
-                try:
-                    await command_channel.edit(name=f"{minecraft_name}'s application ✅", locked=True, invitable=False, auto_archive_duration=60)
-                except:
-                    log_channel.send(f"Something went wrong editing <#{command_channel.id}>")
+                approved_embed = self.fill_embed(interaction, user, minecraft_name, client_type)
+                approved_embed.title = "Application Approved"
+                approved_embed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
                 
+                public_approved_embed = discord.Embed(title="✅ Application Approved", color=0x72c87a)
+                public_approved_embed.description = f"Client Type: **{client_type.name}**\nMinecraft Name: **{minecraft_name}**\n\n{message}"
+                public_approved_embed.timestamp = datetime.datetime.now()
 
+                await command_channel.send(embed=public_approved_embed)
+                await log_channel.send(embed=approved_embed)
+                await command_channel.edit(name=f"✅ {minecraft_name}'s application", locked=True, invitable=False, auto_archive_duration=60)
 
-                await chat_channel.send(self.add_to_whitelist(minecraft_name, client_type))
-                status = await self.name_and_role(user, minecraft_name, member_role)
-                await interaction.response.send_message(f"{status}", ephemeral=True)
-                
-            # if user IS staff AND command IS NOT used in private thread:
-            elif interaction.user.get_role(constant.STAFF_ROLE_ID) and not command_channel.type == discord.ChannelType.private_thread: 
-                await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
-            # if user IS staff AND command IS used in private thread AND private thread parent IS NOT #apply-here:
-            elif interaction.user.get_role(constant.STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and not command_channel.parent_id == constant.APP_CHANNEL_ID:
-                await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
-
-            # else user IS NOT staff
-            else:
-                await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
+                await chat_channel.send(self.run_whitelist_command(minecraft_name, client_type))
+                user_update_status = await self.update_user(user, minecraft_name, member_role)
+                await interaction.response.send_message(f"{user_update_status}", ephemeral=True)
+    # handle if command is used (by not staff) | (in wrong channel or thread)
+    @approve.error
+    async def approve_error(self, error, interaction):
+        if isinstance(error, commands.ThreadNotFound):
+            await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
+        elif isinstance(error, commands.RoleNotFound):
+            await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
 
 
     @app_commands.command(name="deny", description="Deny a whitelist")
