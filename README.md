@@ -7,7 +7,8 @@
 
 + re-whitelist button for members to get re-added (maybe)
 
-+ '/close' command to close threads [threads timeout automatically after 24 hours (new) or 1 hour (approved)] (maybe)
+- '/close' command to close threads [threads timeout automatically after 24 hours (new) or 1 hour (approved)] (maybe)
+-   close can be done easy by editing the thread.
 
 - edit old embed application message when bot start
 
@@ -17,7 +18,7 @@
 +   (append user ID to list/json on button press, remove when denied)
 +   check if a person has applied in the past, update thread to include #2, #3 etc
 
-- add way to whitelist people with no application thread
+- add way to whitelist people with no application thread ('/quick-apply')
 
 + add statistics for each staff member that has accepted/denied and average time
 +   timestamp comparison between start application and accept/deny application
@@ -30,14 +31,14 @@
 
 + add ping role for 'available to accept'
 
-+ add ping after X hours as reminder to approve (maybe)
+! add ping after X hours as reminder to approve (maybe)
 
-+ split ApplicationView() into multiple smaller functions to read and edit better
-+   also do the same for the '/approve' and '/deny' commands -> remove lots of duplicate code
+- split ApplicationView() into multiple smaller functions to read and edit better
+-   also do the same for the '/approve' and '/deny' commands -> remove lots of duplicate code
 
 ! look into using sqlite for storage instead -> better integration into existing barebones database?
 
-+ soon might need to split slash_commands into individual files !?
+! soon might need to split slash_commands into individual files !?
 ```
 </br>
 </br>
