@@ -100,7 +100,8 @@ class SlashCommands(commands.Cog):
             await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
 
 
-    @app_commands.command(name="deny", description="Deny a whitelist")
+    # deny a whitelist application inside private thread
+    @app_commands.command(name="deny", description="Deny a whitelist application.")
     async def deny(
                 self,
                 interaction, 
@@ -141,8 +142,10 @@ class SlashCommands(commands.Cog):
             # else user IS NOT staff
             else:
                 await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
+    # add error handling here instead
 
 
+    # approve a whitelist application without being in application thread
     @app_commands.command(name="quick-approve", description="Simple /approve without channel requirements.")
     @app_commands.describe(client_type="The applicant's platform.")
     async def quickapprove(
@@ -171,11 +174,11 @@ class SlashCommands(commands.Cog):
                 approvedEmbed.timestamp = datetime.datetime.now()
 
 
-                await chat_channel.send(await self.add_to_whitelist(minecraft_name, client_type))
+                await chat_channel.send(await self.run_whitelist_command(minecraft_name, client_type))
                 await command_channel.send(f"**{minecraft_name}** has been added to the whitelist.")
                 await log_channel.send(embed=approvedEmbed)
 
-                status = await self.name_and_role(user, minecraft_name, member_role)
+                status = await self.update_user(user, minecraft_name, member_role)
                 await interaction.response.send_message(f"{status}", ephemeral=True)
 
             else:
