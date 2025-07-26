@@ -1,5 +1,4 @@
 import discord
-import time
 import datetime
 import json
 from termcolor import colored
@@ -28,7 +27,6 @@ class ApplicationView(discord.ui.View):
                     invitable=False
                 )
 
-                # time.sleep(1.5)
                 await button.response.send_message(f"Your application thread was created at <#{new_thread.id}>.",ephemeral=True)
                 await new_thread.send(embed=self.templateEmbed)
                 
@@ -111,10 +109,10 @@ class CoreFunction(commands.Cog):
             if last_message.embeds and last_message.embeds[0].description == whitelist_message:
                 return 
             else:
-                await last_message.edit(embed=self.templateEmbed, view=view)
+                await last_message.edit(embed=view.templateEmbed, view=view)
                 print(colored("Embed message", "yellow"), "reloaded.")
         else:
-            last_message = await application_channel.send(embed=self.templateEmbed, view=view)
+            last_message = await application_channel.send(embed=view.templateEmbed, view=view)
 
         self.store_id(last_message.id)
 
