@@ -1,6 +1,6 @@
 import discord
 import os
-import storage.system as constant
+from storage.system import Constants as constant
 
 from dotenv import load_dotenv
 from discord.ext import commands, tasks
