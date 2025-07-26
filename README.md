@@ -26,7 +26,6 @@
 - Move embed message for application from constants.py to text file storage
 -   '$reload' command to update the application file somehow
 
-
 - send whitelist commands to #mc-chat
 
 + add ping role for 'available to accept'
@@ -34,9 +33,11 @@
 + add ping after X hours as reminder to approve (maybe)
 
 + split ApplicationView() into multiple smaller functions to read and edit better
-+   also do the same for the '/approve' and '/deny' commands - remove lots of duplicate code
++   also do the same for the '/approve' and '/deny' commands -> remove lots of duplicate code
 
-+ look into using sqlite for storage instead -> better integration into existing barebones database?
+! look into using sqlite for storage instead -> better integration into existing barebones database?
+
++ soon might need to split slash_commands into individual files !?
 ```
 </br>
 </br>
