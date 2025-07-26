@@ -111,13 +111,6 @@ class SlashCommands(commands.Cog):
                 await chat_channel.send(await self.run_whitelist_command(minecraft_name, client_type))
                 user_update_status = await self.update_user(user, minecraft_name, member_role)
                 await interaction.response.send_message(f"{user_update_status}", ephemeral=True)
-    # handle if command is used (by not staff) | (in wrong channel or thread)
-    @approve.error
-    async def approve_error(self, interaction, error):
-        if isinstance(error, c_error.InvalidCommandChannel):
-            await interaction.response.send_message("You're in the wrong channel for that command!", ephemeral=True)
-        elif isinstance(error, c_error.UserIsNotStaff):
-            await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
 
 
     # deny a whitelist application inside private thread
@@ -138,13 +131,6 @@ class SlashCommands(commands.Cog):
             await interaction.response.send_message("Application Denied.", ephemeral=True)
             await command_channel.send(embed=publicDeniedEmbed)
             await log_channel.send(embed=deniedEmbed)
-    # handle if command is used (by not staff) | (in wrong channel or thread)
-    @deny.error
-    async def deny_error(self, interaction, error):
-        if isinstance(error, c_error.InvalidCommandChannel):
-            await interaction.response.send_message(error, ephemeral=True)
-        elif isinstance(error, c_error.UserIsNotStaff):
-            await interaction.response.send_message(error, ephemeral=True)
 
 
     # approve a whitelist application without being in application thread
@@ -166,23 +152,17 @@ class SlashCommands(commands.Cog):
             await chat_channel.send(await self.run_whitelist_command(minecraft_name, client_type))
             await log_channel.send(embed=approvedEmbed)
             await command_channel.send(f"**{minecraft_name}** has been added to the whitelist.")
-    # handle if command is used by not staff
-    @quickapprove.error
-    async def quickapprove_error(self, interaction, error):
-        if isinstance(error, c_error.UserIsNotStaff):
+
+
+    # global SlashCommands Cog error handler
+    async def cog_command_error(self, interaction, error):
+        if isinstance(error, c_error.InvalidCommandChannel):
             await interaction.response.send_message(error, ephemeral=True)
-
-
-    # lock and close an open application thread
-    @app_commands.command(name="close-thread", description="Close an old or reopened application thread.")
-    async def closethread(self, interaction):
-        command_channel = interaction.channel
-        log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
-
-        if interaction.user.get_role(constant.STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == constant.APP_CHANNEL_ID:
-            command_channel.edit(name=f"🔒 {command_channel.name}", archived=True, locked=True)
-            log_channel.send_message(f"<#{command_channel.id}> closed by **{interaction.user.name}**.")
-    # add error handling here instead
+        elif isinstance(error, c_error.UserIsNotStaff):
+            await interaction.response.send_message(error, ephemeral=True)
+        else:
+            print(error)
+            await interaction.response.send_message(f"Error: {error}")
 
 async def setup(bot):
     await bot.add_cog(SlashCommands(bot))
