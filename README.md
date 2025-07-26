@@ -39,6 +39,8 @@
 ! look into using sqlite for storage instead -> better integration into existing barebones database?
 
 ! soon might need to split slash_commands into individual files !?
+
++ Add some way to update the whitelist_message.txt from a command without needing to directly access the file
 ```
 </br>
 </br>
