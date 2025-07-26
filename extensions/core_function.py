@@ -1,10 +1,11 @@
-import storage.constants as constant
 import discord
 import time
 import datetime
 import json
 from termcolor import colored
 from discord.ext import commands
+
+from storage.system import Constants as constant
 
 class CoreFunction(commands.Cog):
     def __init__(self, bot):

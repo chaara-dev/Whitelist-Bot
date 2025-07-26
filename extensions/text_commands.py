@@ -1,7 +1,8 @@
-import storage.constants as constant
 import discord
 from termcolor import colored
 from discord.ext import commands
+
+from storage.system import Constants as constant
 
 
 class TextCommands(commands.Cog):
