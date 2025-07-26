@@ -180,9 +180,19 @@ class SlashCommands(commands.Cog):
 
             else:
                 await interaction.response.send_message("You don't have permission to use that command.", ephemeral=True)
+    # add error handling here instead
 
 
-    # add a /close command here
+    # lock and close an open application thread
+    @app_commands.command(name="close-thread", description="Close an old or reopened application thread.")
+    async def closethread(self, interaction):
+        command_channel = interaction.channel
+        log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
+
+        if interaction.user.get_role(constant.STAFF_ROLE_ID) and command_channel.type == discord.ChannelType.private_thread and command_channel.parent_id == constant.APP_CHANNEL_ID:
+            command_channel.edit(name=f"🔒 {command_channel.name}", archived=True, locked=True)
+            log_channel.send_message(f"<#{command_channel.id}> closed by **{interaction.user.name}**.")
+    # add error handling here instead
 
 async def setup(bot):
     await bot.add_cog(SlashCommands(bot))
