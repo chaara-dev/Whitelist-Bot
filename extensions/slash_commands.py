@@ -155,6 +155,7 @@ class SlashCommands(commands.Cog):
             log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
 
             deniedEmbed = await self.fill_embed(interaction, False, user, None, None, reason)
+            deniedEmbed.title = "Application Denied"
             deniedEmbed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
 
             publicDeniedEmbed = discord.Embed(title="❌ Application Denied", color=0xe74d3c)
