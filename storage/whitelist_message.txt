@@ -6,13 +6,15 @@
 - While you're waiting for your app to be reviewed, check out our <#1397454766866698270>
 
 ## Whitelist Application Form:
-```Minecraft Name: 
+```
+Minecraft Name: 
 Age (18+): 
 Is your account Bedrock or Java?: 
 Where did you find out about us?: 
 Why are you interested in joining?: 
 What is your favorite thing about Minecraft?: 
 What is the Keyword?: 
-Do you agree to our server's rules?: ```
+Do you agree to our server's rules?:
+```
 ## NOTICE:
 ## Season 8 is about to end on August 1st, 2025; with season 9 starting August 9th, 2025
