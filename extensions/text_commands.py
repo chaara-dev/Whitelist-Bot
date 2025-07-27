@@ -25,8 +25,8 @@ class TextCommands(commands.Cog):
 
             await cog_core_function.update_embed_message()
 
-            await context.message.add_reaction("✅")
             try:
+                await context.message.add_reaction("✅")
                 await context.message.delete(delay=1)
             except discord.NotFound:
                 pass
