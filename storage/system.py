@@ -5,6 +5,8 @@ class CustomErrors():
         pass # error to handle user missing staff role
     class InvalidCommandChannel(app_commands.CheckFailure):
         pass #error to handle command used in incorrect channel
+    class UserIsNotOwner(app_commands.CheckFailure):
+        pass #error to handle if command used by someone other than owner
 
 class Constants():
     SERVER_ID = 1085767835495714888

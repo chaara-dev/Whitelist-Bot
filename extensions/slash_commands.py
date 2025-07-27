@@ -26,6 +26,13 @@ class SlashCommands(commands.Cog):
                     raise c_error.UserIsNotStaff("You don't have permission to use that command.")
                 return True
             return app_commands.check(predicate)
+    # check if command user is Owner
+    def user_is_owner():
+        async def predicate(interaction: discord.Interaction) -> bool:
+            if interaction.user.id != constant.OWNER_ID:
+                raise c_error.UserIsNotOwner("You don't have permission to use that command.")
+            return True
+        return app_commands.check(predicate)
     # check if command used in valid channel
     def used_in_valid_channel():
         def predicate(interaction: discord.Interaction) -> bool:
@@ -83,6 +90,32 @@ class SlashCommands(commands.Cog):
         embed.timestamp = datetime.datetime.now()
 
         return embed
+    # load whitelist message and return a code block displayable string
+    def get_format_whitelist_message(self):
+        formatted_message = ""
+        try:
+            with open("storage/whitelist_message.txt", "r") as file:
+                for line in file.readlines():
+                    if "```" in line:
+                        formatted_message += "+++\n"
+                    else:
+                        formatted_message += line
+                return formatted_message
+        except FileNotFoundError:
+            return None
+    # comment goes here
+    def set_format_whitelist_message(self, message : str):
+        formatted_message = ""
+        try:
+            with open("storage/whitelist_message.txt", "w") as file:
+                for line in message.splitlines(keepends=True):
+                    if "+++" in line:
+                        formatted_message += "```\n"
+                    else:
+                        formatted_message += line
+                file.write(formatted_message)
+        except FileNotFoundError:
+            return None
 
 
     # approve a whitelist application inside private thread
@@ -154,15 +187,57 @@ class SlashCommands(commands.Cog):
             await command_channel.send(f"**{minecraft_name}** has been added to the whitelist.")
 
 
-    # global SlashCommands Cog error handler
-    async def cog_command_error(self, interaction, error):
-        if isinstance(error, c_error.InvalidCommandChannel):
-            await interaction.response.send_message(error, ephemeral=True)
-        elif isinstance(error, c_error.UserIsNotStaff):
-            await interaction.response.send_message(error, ephemeral=True)
+    # update whitelist message in #apply-here embed
+    @app_commands.command(name="update-whitelist-message", description="Update whitelist embed message.")
+    @user_is_owner()
+    async def update_whitelist_message(self, interaction : discord.Interaction):
+        def check_owner_message(m):
+            return interaction.user == m.author
+        
+
+        await interaction.response.send_message(
+            f"## Current <#{constant.APP_CHANNEL_ID}> Whitelist Message:\n```{self.get_format_whitelist_message()}```\n-# **Copy** this text to edit it, and **paste** it back into the channel when you're ready to update it.\n-# You can cancel this command by typing `cancel` or `quit` or not sending a message within the next 60 seconds.", 
+            ephemeral=True)
+
+        edited_message = await self.bot.wait_for("message", timeout=60, check=check_owner_message)
+        cancel_check_message = edited_message.content.lower().strip()
+        if cancel_check_message == "cancel" or cancel_check_message == "quit":
+            await edited_message.delete()
+            await interaction.edit_original_response(content="Command cancelled.")
         else:
-            print(error)
-            await interaction.response.send_message(f"Error: {error}")
+            self.set_format_whitelist_message(edited_message.content)
+            await edited_message.delete()
+            
+            self.bot.get_cog("CoreFunction")
+            await interaction.edit_original_response(content=f"<#{constant.APP_CHANNEL_ID}> whitelist embed message updated.")
+
+
+    # global SlashCommands Cog error handler
+    async def cog_app_command_error(self, interaction, error):
+        try:
+            if isinstance(error, c_error.InvalidCommandChannel):
+                await interaction.response.send_message(error, ephemeral=True)
+            elif isinstance(error, c_error.UserIsNotStaff):
+                await interaction.response.send_message(error, ephemeral=True)
+            elif isinstance(error, c_error.UserIsNotOwner):
+                await interaction.response.send_message(error, ephemeral=True)
+            elif isinstance(error, TimeoutError):
+                await interaction.response.send_message(error, ephemeral=True)
+            else:
+                print(error)
+                await interaction.response.send_message(f"Error: {error}", ephemeral=True)
+        except:
+            if isinstance(error, c_error.InvalidCommandChannel):
+                await interaction.followup.send(error, ephemeral=True)
+            elif isinstance(error, c_error.UserIsNotStaff):
+                await interaction.followup.send(error, ephemeral=True)
+            elif isinstance(error, c_error.UserIsNotOwner):
+                await interaction.followup.send(error, ephemeral=True)
+            elif isinstance(error, TimeoutError):
+                await interaction.followup.send(error, ephemeral=True)
+            else:
+                print(error)
+                await interaction.followup.send(f"Error: {error}", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(SlashCommands(bot))
