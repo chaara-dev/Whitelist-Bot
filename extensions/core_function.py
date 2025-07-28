@@ -1,8 +1,10 @@
 import discord
 import datetime
 import json
+import sqlite3
+from contextlib import closing
 from termcolor import colored
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from storage.system import Constants as constant
 
@@ -57,6 +59,34 @@ class ApplicationView(discord.ui.View):
 class CoreFunction(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+    #     self.create_table()
+
+
+    # def create_table(self):
+    #     self.execute_statement("""--sql
+    #                 CREATE TABLE IF NOT EXISTS message_storage(
+    #                     id INTEGER PRIMARY KEY
+    #                     message_id TEXT NOT NULL
+    #                     )
+    #                 """, fetch=False)
+    #     self.execute_statement("""--sql INSERT OR IGNORE INTO message_storage (id, message_id) VALUES (1, '')""", fetch=False)
+
+    # def execute_statement(self, statement, fetch=False):
+    #     with closing(sqlite3.connect("storage/database.db")) as conn: # auto-closes
+    #         with conn: # auto-commits
+    #             with closing(conn.cursor()) as cursor: # auto-closes
+    #                 cursor.execute(statement)
+    #                 if fetch:
+    #                     return cursor.fetchone() # returns fetched row
+
+
+    # def load_stored_id(self):
+    #     try:
+    #         row = self.execute_statement("""SELECT message_id FROM message_storage WHERE id = 1""", fetch=True)
+    #         if row is not None: return row[0]
+    #         else: return None
+    #     except:
+    #         return None
 
 
     # load message ID from json storage for application channel
