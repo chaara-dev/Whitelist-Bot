@@ -103,7 +103,7 @@ class SlashCommands(commands.Cog):
                 return formatted_message
         except FileNotFoundError:
             return None
-    # comment goes here
+    # use input message and set whitelist message with proper code block formatting
     def set_format_whitelist_message(self, message : str):
         formatted_message = ""
         try:
@@ -116,7 +116,13 @@ class SlashCommands(commands.Cog):
                 file.write(formatted_message)
         except FileNotFoundError:
             return None
-
+    # loads a default whitelist message from seperate file
+    def get_default_whitelist_message(self):
+        try: 
+            with open("storage/whitelist_message_default.txt") as file:
+                return file.read()
+        except FileNotFoundError:
+            return None
 
     # approve a whitelist application inside private thread
     @app_commands.command(name="approve", description="Approve a whitelist application.")
@@ -194,22 +200,31 @@ class SlashCommands(commands.Cog):
     async def update_whitelist_message(self, interaction : discord.Interaction):
         def check_owner_message(m):
             return interaction.user == m.author
-        
 
         await interaction.response.send_message(
-            f"## Current <#{constant.APP_CHANNEL_ID}> Whitelist Message:\n```{self.get_format_whitelist_message()}```\n-# **Copy** this text to edit it, and **paste** it back into the channel when you're ready to update it.\n-# You can cancel this command by typing `cancel` or `quit` or not sending a message within the next 60 seconds.", 
+            f"## Current <#{constant.APP_CHANNEL_ID}> Whitelist Message:\n```{self.get_format_whitelist_message()}```\n-# - **Copy** this text to edit. **Paste** it back into the channel to update.\n-# - Cancel this command by typing `cancel` or `quit`, or by not sending a message within the next 60 seconds.\n-# - Reset message to default by typing `default` or `reset`.", 
             ephemeral=True)
+        try:
+            edited_message = await self.bot.wait_for("message", timeout=60, check=check_owner_message)
+        except TimeoutError:
+            await interaction.edit_original_response(content="No Message recieved within 60 seconds. Command cancelled.")
+            return
+        check_message = edited_message.content.lower().strip()
 
-        edited_message = await self.bot.wait_for("message", timeout=60, check=check_owner_message)
-        cancel_check_message = edited_message.content.lower().strip()
-        if cancel_check_message == "cancel" or cancel_check_message == "quit":
+        if check_message == "cancel" or check_message == "quit" or check_message[0] == "$":
             await edited_message.delete()
             await interaction.edit_original_response(content="Command cancelled.")
+
+        elif check_message == "default" or check_message == "reset":
+            await edited_message.delete()
+            check_message = self.get_default_whitelist_message()
+            await self.bot.get_cog("CoreFunction").update_embed_message()
+            await interaction.edit_original_response(content=f"<#{constant.APP_CHANNEL_ID}> whitelist embed message reset.")
+
         else:
             self.set_format_whitelist_message(edited_message.content)
             await edited_message.delete()
-            
-            self.bot.get_cog("CoreFunction")
+            await self.bot.get_cog("CoreFunction").update_embed_message()
             await interaction.edit_original_response(content=f"<#{constant.APP_CHANNEL_ID}> whitelist embed message updated.")
 
 
@@ -223,7 +238,7 @@ class SlashCommands(commands.Cog):
             elif isinstance(error, c_error.UserIsNotOwner):
                 await interaction.response.send_message(error, ephemeral=True)
             elif isinstance(error, TimeoutError):
-                await interaction.response.send_message(error, ephemeral=True)
+                await interaction.response.send_message("Timed out while waiting for new whitelist message.", ephemeral=True)
             else:
                 print(error)
                 await interaction.response.send_message(f"Error: {error}", ephemeral=True)
