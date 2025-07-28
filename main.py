@@ -29,19 +29,19 @@ async def update_bot_status():
 async def on_ready():
     await bot.load_extension("extensions.text_commands")
     print("Extension:", colored("text_commands.py", "yellow"), "loaded.")
-    cog_text_commands = bot.get_cog("TextCommands")
+    cog_text = bot.get_cog("TextCommands")
 
     await bot.load_extension("extensions.slash_commands")
     print("Extension:", colored("slash_commands.py", "yellow"), "loaded.")
-    cog_slash_commands = bot.get_cog("SlashCommands")
+    cog_slash = bot.get_cog("SlashCommands")
 
     await bot.load_extension("extensions.core_function")
     print("Extension:", colored("core_function.py", "yellow"), "loaded.")
-    cog_core_function = bot.get_cog("CoreFunction")
+    cog_core = bot.get_cog("CoreFunction")
 
     print(f"Logged in as", colored(f"{bot.user.name}", "green") + "!")
 
-    await cog_core_function.update_embed_message()
+    await cog_core.update_embed_message()
     update_bot_status.start()
 
 

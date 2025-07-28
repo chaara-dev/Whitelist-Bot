@@ -11,9 +11,9 @@ class TextCommands(commands.Cog):
 
     @commands.command()
     async def reload(self, context):
-        cog_text_commands = self.bot.get_cog("TextCommands")
-        cog_slash_commands = self.bot.get_cog("SlashCommands")
-        cog_core_function = self.bot.get_cog("CoreFunction")
+        cog_text = self.bot.get_cog("TextCommands")
+        cog_slash = self.bot.get_cog("SlashCommands")
+        cog_core = self.bot.get_cog("CoreFunction")
 
         if context.author.id == constant.OWNER_ID:
             await self.bot.reload_extension("extensions.text_commands")
@@ -23,7 +23,7 @@ class TextCommands(commands.Cog):
             await self.bot.reload_extension("extensions.core_function")
             print("Extension:", colored("core_function.py", "yellow"), "reloaded.")
 
-            await cog_core_function.update_embed_message()
+            await cog_core.update_embed_message()
 
             try:
                 await context.message.add_reaction("✅")
