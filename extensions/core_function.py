@@ -19,7 +19,7 @@ class ApplicationView(discord.ui.View):
     async def button_callback(self, button, interaction):
         try:
             channel = self.bot.get_channel(constant.APP_CHANNEL_ID)
-            if button.user.get_role(constant.MEMBER_ROLE_ID) is None or button.user.id == constant.OWNER_ID:
+            if button.user.get_role(constant.MEMBER_ROLE_ID) is None: # or button.user.id == constant.OWNER_ID:
                 new_thread = await channel.create_thread(
                     name=f"{button.user.name} application", 
                     message=None, 
@@ -49,10 +49,10 @@ class ApplicationView(discord.ui.View):
             
             elif button.user.get_role(constant.MEMBER_ROLE_ID):
                 try:
-                    await button.response.send_message(f"You've already applied for the whitelist. If you have since been removed, please contact a\n Staff member.", ephemeral=True)
+                    await button.response.send_message(f"**You've already applied for the whitelist.**\nIf you have since been removed, please contact a staff member or make a <#{constant.SUPPORT_CHANNEL_ID}> post.", ephemeral=True)
                 except Exception as idfk:
                     print(f"error: {idfk}")
-                    await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a Staff member.", ephemeral=True)
+                    await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a staff member.", ephemeral=True)
         except Exception as e:
             print(f"ERROR: {e}")
 
