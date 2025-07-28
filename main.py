@@ -12,11 +12,11 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=intents)
 
-
-bot_status_list = cycle(["for the keyword...", "for new applications.", "#apply-here", "your backs", "the minecrafters"])
-
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=5)
 async def update_bot_status():
+    bot_status_list = cycle([
+        "for the keyword...", "for new applications", "#apply-here", "your backs", "the Minecraft movie", "barebonesmp.com"
+        ])
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.watching, 
