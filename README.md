@@ -3,16 +3,19 @@
 
 ## To-Do List
 ```diff
++ GREEN: IMPLEMENTED -> MAY BE UPDATED IN FUTURE
+- RED: UNIMPLEMENTED -> PLANNED FOR FUTURE
+! YELLOW: ON HOLD | MAY NOT BE IMPLEMENTED | IN PROGRESS
+
+══════════════════════════════════════════════════════════════════════════════════════════
+
 + disallow members to apply
 
-- re-whitelist button for members to get re-added (maybe)
-
-+ '/close' command to close threads [threads timeout automatically after 24 hours (new) or 1 hour (approved)] (maybe)
-+   close can be done easy by editing the thread.
+! re-whitelist button for members to get re-added [MAYBE]
 
 + edit old embed application message when bot start
 
-! add try/except methods to things that can break (WIP)
+! add try/except methods to things that can break [WIP]
 
 - don't let people with open applications apply again 
 -   (append user ID to list/json on button press, remove when denied)
@@ -31,25 +34,26 @@
 
 - add ping role for 'available to accept'
 
-! add ping after X hours as reminder to approve (maybe)
+! add ping after X hours as reminder to approve [MAYBE]
 
-+ split ApplicationView() into multiple smaller functions to read and edit better
-+   also do the same for the '/approve' and '/deny' commands -> remove lots of duplicate code
+! split various functions into smaller or more generalized functions [WIP]
+-   also do the same for the '/approve' and '/deny' commands -> remove lots of duplicate code
 
-! look into using sqlite for storage instead -> better integration into existing barebones database?
+! look into using sqlite for storage instead -> better integration into existing barebones database? [WIP]
 
-! soon might need to split slash_commands into individual files !?
+! soon might need to split slash_commands into individual files [MAYBE]
 
 + Add some way to update the whitelist_message.txt from a command without needing to directly access the file
 
 - "cry about it" onmessage response dead server
+-   1/50 chance of replying or something, and X hours cooldown after
 ```
 </br>
 </br>
 </br>
 
 keeping this for later
-```
+```python
 with open('filename.json', 'r') as file:
     json_data = json.load(file)
 
