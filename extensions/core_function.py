@@ -151,29 +151,30 @@ class CoreFunction(commands.Cog):
 
     # BY DOING THIS YOU WILL NEED TO GO BACK THROUGH ALL OTHER FOUR (4) FUNCTION CALLS AND ADD APPROPRIATE PARAMETERS (see next line)
     # cog_core_function.update_embed_message(cog_core_function.load_stored_id, constant.AVAILABLE_CHANNEL, "Set whether you want to be pinged...", cog_core_function.AvailableRoleView)
-    async def update_embed_message(self, stored_message_id, embed_channel, embed_message, view):
-        last_message = None
-        if stored_message_id is not None:
-            try:
-                last_message = await embed_channel.fetch_message(stored_message_id)
-            except discord.NotFound:
-                async for searched_message in embed_channel.history(limit=100, oldest_first=True):
-                    if searched_message.embeds and searched_message.author == self.bot.user:
-                        try:
-                            last_message = await embed_channel.fetch_message(searched_message.id)
-                        except:
-                            last_message = None
 
-        if last_message is not None:
-            if last_message.embeds and last_message.embeds[0].description == embed_message:
-                return
-            else:
-                await last_message.edit(embed=view.placeholder_embed_title, view=view)
-                print(colored(f"Embed message for {embed_channel.name}", "yellow"), "reloaded.")
-        else:
-            last_message = await embed_channel.send(embed=view.placeholder_embed_title, view=view)
+    # async def update_embed_message(self, stored_message_id, embed_channel, embed_message, view):
+    #     last_message = None
+    #     if stored_message_id is not None:
+    #         try:
+    #             last_message = await embed_channel.fetch_message(stored_message_id)
+    #         except discord.NotFound:
+    #             async for searched_message in embed_channel.history(limit=100, oldest_first=True):
+    #                 if searched_message.embeds and searched_message.author == self.bot.user:
+    #                     try:
+    #                         last_message = await embed_channel.fetch_message(searched_message.id)
+    #                     except:
+    #                         last_message = None
 
-        self.store_id(last_message.id)
+    #     if last_message is not None:
+    #         if last_message.embeds and last_message.embeds[0].description == embed_message:
+    #             return
+    #         else:
+    #             await last_message.edit(embed=view.placeholder_embed_title, view=view)
+    #             print(colored(f"Embed message for {embed_channel.name}", "yellow"), "reloaded.")
+    #     else:
+    #         last_message = await embed_channel.send(embed=view.placeholder_embed_title, view=view)
+
+    #     self.store_id(last_message.id)
 
 
     # tasks loop x hours (10080 minutes? or hours and stuff (1 week) - 6 days to account for bad timing or smth)
