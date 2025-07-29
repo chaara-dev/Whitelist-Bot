@@ -224,8 +224,10 @@ class SlashCommands(commands.Cog):
             await self.bot.get_cog("CoreFunction").update_embed_message(
                 stored_message_id=db.load_stored_id("application"),
                 embed_channel=self.bot.get_channel(constant.APP_CHANNEL_ID),
+                embed_name="application",
                 embed_message=cog_core.load_whitelist_message(),
-                view=ext_core.ApplicationView(self.bot)
+                view=ext_core.ApplicationView(self.bot),
+                view_embed=ext_core.ApplicationView(self.bot).template_embed
             )
             await interaction.edit_original_response(content=f"<#{constant.APP_CHANNEL_ID}> whitelist embed message reset.")
 
@@ -235,8 +237,10 @@ class SlashCommands(commands.Cog):
             await self.bot.get_cog("CoreFunction").update_embed_message(
                 stored_message_id=db.load_stored_id("application"),
                 embed_channel=self.bot.get_channel(constant.APP_CHANNEL_ID),
+                embed_name="application",
                 embed_message=cog_core.load_whitelist_message(),
-                view=ext_core.ApplicationView(self.bot)
+                view=ext_core.ApplicationView(self.bot),
+                view_embed=ext_core.ApplicationView(self.bot).template_embed
             )
             await interaction.edit_original_response(content=f"<#{constant.APP_CHANNEL_ID}> whitelist embed message updated.")
 

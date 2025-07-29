@@ -28,8 +28,10 @@ class TextCommands(commands.Cog):
             await cog_core.update_embed_message(
                 stored_message_id=db.load_stored_id("application"),
                 embed_channel=self.bot.get_channel(constant.APP_CHANNEL_ID),
+                embed_name="application",
                 embed_message=cog_core.load_whitelist_message(),
-                view=ext_core.ApplicationView(self.bot)
+                view=ext_core.ApplicationView(self.bot),
+                view_embed=ext_core.ApplicationView(self.bot).template_embed
             )
 
             try:
