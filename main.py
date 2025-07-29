@@ -1,6 +1,8 @@
 import discord
 import os
 from storage.system import Constants as constant
+import extensions.db_logic as db
+import extensions.core_function as ext_core
 
 from dotenv import load_dotenv
 from discord.ext import commands, tasks
@@ -12,11 +14,18 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=intents)
 
+bot_status_list = cycle([
+        "for the keyword...", 
+        "for new applications", 
+        "#apply-here", 
+        "your backs", 
+        "the Minecraft movie", 
+        "for new members",
+        "barebonesmp.com"
+        ])
+
 @tasks.loop(seconds=5)
 async def update_bot_status():
-    bot_status_list = cycle([
-        "for the keyword...", "for new applications", "#apply-here", "your backs", "the Minecraft movie", "barebonesmp.com"
-        ])
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.watching, 
@@ -40,7 +49,22 @@ async def on_ready():
 
     print(f"Logged in as", colored(f"{bot.user.name}", "green") + "!")
 
-    await cog_core.update_embed_message()
+    await cog_core.update_embed_message(
+        stored_message_id=db.load_stored_id("application"),
+        embed_channel=bot.get_channel(constant.APP_CHANNEL_ID),
+        embed_name="application",
+        embed_message=cog_core.load_whitelist_message(),
+        view=ext_core.ApplicationView(bot),
+        view_embed=ext_core.ApplicationView(bot).template_embed
+    )
+    await cog_core.update_embed_message(
+        stored_message_id=db.load_stored_id("available"),
+        embed_channel=bot.get_channel(constant.ROLE_CHANNEL_ID),
+        embed_name="available",
+        embed_message="Members with this role will be pinged every time a new application is created.\n\n:3",
+        view=ext_core.AvailableRoleView(bot),
+        view_embed=ext_core.AvailableRoleView(bot).template_embed
+    )
     update_bot_status.start()
 
 

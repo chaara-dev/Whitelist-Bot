@@ -6,6 +6,8 @@ from termcolor import colored
 
 from storage.system import Constants as constant
 from storage.system import CustomErrors as c_error
+import extensions.db_logic as db
+import extensions.core_function as ext_core
 
 from discord import app_commands
 from discord.ext import commands
@@ -210,6 +212,7 @@ class SlashCommands(commands.Cog):
             await interaction.edit_original_response(content="No Message recieved within 60 seconds. Command cancelled.")
             return
         check_message = edited_message.content.lower().strip()
+        cog_core = self.bot.get_cog("CoreFunction")
 
         if check_message == "cancel" or check_message == "quit" or check_message[0] == "$":
             await edited_message.delete()
@@ -218,13 +221,23 @@ class SlashCommands(commands.Cog):
         elif check_message == "default" or check_message == "reset":
             self.set_format_whitelist_message(self.get_default_whitelist_message())
             await edited_message.delete()
-            await self.bot.get_cog("CoreFunction").update_embed_message()
+            await self.bot.get_cog("CoreFunction").update_embed_message(
+                stored_message_id=db.load_stored_id("application"),
+                embed_channel=self.bot.get_channel(constant.APP_CHANNEL_ID),
+                embed_message=cog_core.load_whitelist_message(),
+                view=ext_core.ApplicationView(self.bot)
+            )
             await interaction.edit_original_response(content=f"<#{constant.APP_CHANNEL_ID}> whitelist embed message reset.")
 
         else:
             self.set_format_whitelist_message(edited_message.content)
             await edited_message.delete()
-            await self.bot.get_cog("CoreFunction").update_embed_message()
+            await self.bot.get_cog("CoreFunction").update_embed_message(
+                stored_message_id=db.load_stored_id("application"),
+                embed_channel=self.bot.get_channel(constant.APP_CHANNEL_ID),
+                embed_message=cog_core.load_whitelist_message(),
+                view=ext_core.ApplicationView(self.bot)
+            )
             await interaction.edit_original_response(content=f"<#{constant.APP_CHANNEL_ID}> whitelist embed message updated.")
 
 

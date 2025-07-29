@@ -3,6 +3,8 @@ from termcolor import colored
 from discord.ext import commands
 
 from storage.system import Constants as constant
+import extensions.db_logic as db
+import extensions.core_function as ext_core
 
 
 class TextCommands(commands.Cog):
@@ -23,7 +25,12 @@ class TextCommands(commands.Cog):
             await self.bot.reload_extension("extensions.core_function")
             print("Extension:", colored("core_function.py", "yellow"), "reloaded.")
 
-            await cog_core.update_embed_message()
+            await cog_core.update_embed_message(
+                stored_message_id=db.load_stored_id("application"),
+                embed_channel=self.bot.get_channel(constant.APP_CHANNEL_ID),
+                embed_message=cog_core.load_whitelist_message(),
+                view=ext_core.ApplicationView(self.bot)
+            )
 
             try:
                 await context.message.add_reaction("✅")

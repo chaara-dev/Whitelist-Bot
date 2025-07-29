@@ -13,7 +13,7 @@ class ApplicationView(discord.ui.View):
     def __init__(self, bot) -> None:
         super().__init__(timeout=None)
         self.bot = bot
-        self.templateEmbed = discord.Embed(title="Whitelist Application Requirements", description=CoreFunction.load_whitelist_message(self), color=0x4654c0)
+        self.template_embed = discord.Embed(title="Whitelist Application Requirements", description=CoreFunction.load_whitelist_message(self), color=0x4654c0)
 
     @discord.ui.button(label="Apply for Whitelist", style=discord.ButtonStyle.primary, custom_id="whitelist_button")
     @commands.Cog.listener()
@@ -31,7 +31,7 @@ class ApplicationView(discord.ui.View):
                 )
 
                 await button.response.send_message(f"Your application thread was created at <#{new_thread.id}>.",ephemeral=True)
-                await new_thread.send(embed=self.templateEmbed)
+                await new_thread.send(embed=self.template_embed)
                 
                 await new_thread.send(f"**Hi <@{button.user.id}>, your whitelist application has been created. Please fill out the above application in the chat here. A staff member will review shortly.**")
 
@@ -57,6 +57,41 @@ class ApplicationView(discord.ui.View):
         except Exception as e:
             print(f"ERROR: {e}")
 
+class AvailableRoleView(discord.ui.View):
+    def __init__(self, bot) -> None:
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.template_embed = discord.Embed(
+            title="Application Ping Role", 
+            description="Members with this role will be pinged every time a new application is created.\n\n:3", 
+            color=0xe30855)
+
+    @discord.ui.button(label="Get Ping Role", style=discord.ButtonStyle.green, custom_id="get_role_button")
+    @commands.Cog.listener()
+    async def button_callback_add(self, button, interaction):
+        try:
+            if button.user.get_role(constant.AVAILABLE_ROLE_ID) is None:
+                await button.user.add_roles(button.guild.get_role(constant.AVAILABLE_ROLE_ID))
+                await button.response.send_message(f"You've added to the `Available` role.",ephemeral=True)
+            else:
+                await button.response.defer()
+        except Exception as error:
+            print(f"ERROR: {error}")
+            await button.response.send_message("Something went wrong while adding your `Available` role.")
+
+    @discord.ui.button(label="Remove Ping Role", style=discord.ButtonStyle.red, custom_id="remove_role_buton")
+    @commands.Cog.listener()
+    async def button_callback_remove(self, button, interaction):
+        try:
+            if button.user.get_role(constant.AVAILABLE_ROLE_ID) is not None:
+                await button.user.remove_roles(button.guild.get_role(constant.AVAILABLE_ROLE_ID))
+                await button.response.send_message(f"You've removed from the `Available` role.",ephemeral=True)
+            else:
+                await button.response.defer()
+        except Exception as error:
+            print(f"ERROR: {error}")
+            await button.response.send_message("Something went wrong while removing your `Available` role.")
+
 class CoreFunction(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -71,66 +106,29 @@ class CoreFunction(commands.Cog):
         except FileNotFoundError:
             return None
 
-
-    # check id and contents of whitelist message and update/send depending
-    async def update_embed_message(self):
+    async def update_embed_message(self, stored_message_id, embed_channel, embed_name, embed_message, view, view_embed):
         last_message = None
-        application_channel = self.bot.get_channel(constant.APP_CHANNEL_ID)
-        view = ApplicationView(self.bot)
-        stored_message_id = db.load_stored_id("application")
-        whitelist_message = self.load_whitelist_message()
-
         if stored_message_id is not None:
             try:
-                last_message = await application_channel.fetch_message(stored_message_id)
+                last_message = await embed_channel.fetch_message(stored_message_id)
             except discord.NotFound:
-                async for searched_message in application_channel.history(limit=100, oldest_first=True):
+                async for searched_message in embed_channel.history(limit=100, oldest_first=True):
                     if searched_message.embeds and searched_message.author == self.bot.user:
                         try:
-                            last_message = await application_channel.fetch_message(searched_message.id)
+                            last_message = await embed_channel.fetch_message(searched_message.id)
                         except:
                             last_message = None
 
         if last_message is not None:
-            if last_message.embeds and last_message.embeds[0].description == whitelist_message:
-                return 
+            if last_message.embeds and last_message.embeds[0].description == embed_message:
+                return
             else:
-                await last_message.edit(embed=view.templateEmbed, view=view)
-                print(colored("Embed message", "yellow"), "reloaded.")
+                await last_message.edit(embed=view_embed, view=view)
+                print(colored(f"Embed message for {embed_channel.name}", "yellow"), "reloaded.")
         else:
-            last_message = await application_channel.send(embed=view.templateEmbed, view=view)
+            last_message = await embed_channel.send(embed=view_embed, view=view)
 
-        db.store_id("application" ,last_message.id)
-
-
-    # async def update_embed_message(self, self.load_stored_id(), self.load_whitelist_message(), self.bot.get_channel(constant.APP_CHANNEL_ID), ApplicationView(self.bot)):
-
-    # BY DOING THIS YOU WILL NEED TO GO BACK THROUGH ALL OTHER FOUR (4) FUNCTION CALLS AND ADD APPROPRIATE PARAMETERS (see next line)
-    # cog_core.update_embed_message(cog_core.load_stored_id, constant.AVAILABLE_CHANNEL, "Set whether you want to be pinged...", cog_core.AvailableRoleView)
-
-    # async def update_embed_message(self, stored_message_id, embed_channel, embed_message, view):
-    #     last_message = None
-    #     if stored_message_id is not None:
-    #         try:
-    #             last_message = await embed_channel.fetch_message(stored_message_id)
-    #         except discord.NotFound:
-    #             async for searched_message in embed_channel.history(limit=100, oldest_first=True):
-    #                 if searched_message.embeds and searched_message.author == self.bot.user:
-    #                     try:
-    #                         last_message = await embed_channel.fetch_message(searched_message.id)
-    #                     except:
-    #                         last_message = None
-
-    #     if last_message is not None:
-    #         if last_message.embeds and last_message.embeds[0].description == embed_message:
-    #             return
-    #         else:
-    #             await last_message.edit(embed=view.placeholder_embed_title, view=view)
-    #             print(colored(f"Embed message for {embed_channel.name}", "yellow"), "reloaded.")
-    #     else:
-    #         last_message = await embed_channel.send(embed=view.placeholder_embed_title, view=view)
-
-    #     self.store_id(last_message.id)
+        db.store_id(embed_name, last_message.id)
 
 
     # tasks loop x hours (10080 minutes? or hours and stuff (1 week) - 6 days to account for bad timing or smth)
@@ -152,4 +150,5 @@ class CoreFunction(commands.Cog):
 async def setup(bot):
     await bot.add_cog(CoreFunction(bot))
     print("Extension:", colored("core_function.py", "yellow"), "loaded.")
-    bot.add_view(ApplicationView(bot)) # IMPORTANT!!!
+    bot.add_view(ApplicationView(bot))
+    bot.add_view(AvailableRoleView(bot))
