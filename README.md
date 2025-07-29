@@ -47,6 +47,8 @@
 
 - "cry about it" onmessage response dead server
 -   1/50 chance of replying or something, and X hours cooldown after
+
+- DM users with details when accepted/denied
 ```
 </br>
 </br>

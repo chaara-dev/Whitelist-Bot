@@ -56,3 +56,4 @@ class TextCommands(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(TextCommands(bot))
+    print("Extension:", colored("text_commands.py", "yellow"), "loaded.")

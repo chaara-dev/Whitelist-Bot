@@ -216,8 +216,8 @@ class SlashCommands(commands.Cog):
             await interaction.edit_original_response(content="Command cancelled.")
 
         elif check_message == "default" or check_message == "reset":
+            self.set_format_whitelist_message(self.get_default_whitelist_message())
             await edited_message.delete()
-            check_message = self.get_default_whitelist_message()
             await self.bot.get_cog("CoreFunction").update_embed_message()
             await interaction.edit_original_response(content=f"<#{constant.APP_CHANNEL_ID}> whitelist embed message reset.")
 
@@ -257,3 +257,4 @@ class SlashCommands(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(SlashCommands(bot))
+    print("Extension:", colored("slash_commands.py", "yellow"), "loaded.")

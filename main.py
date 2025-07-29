@@ -27,16 +27,15 @@ async def update_bot_status():
 
 @bot.event
 async def on_ready():
+    await bot.load_extension("extensions.db_logic")
+
     await bot.load_extension("extensions.text_commands")
-    print("Extension:", colored("text_commands.py", "yellow"), "loaded.")
     cog_text = bot.get_cog("TextCommands")
 
     await bot.load_extension("extensions.slash_commands")
-    print("Extension:", colored("slash_commands.py", "yellow"), "loaded.")
     cog_slash = bot.get_cog("SlashCommands")
 
     await bot.load_extension("extensions.core_function")
-    print("Extension:", colored("core_function.py", "yellow"), "loaded.")
     cog_core = bot.get_cog("CoreFunction")
 
     print(f"Logged in as", colored(f"{bot.user.name}", "green") + "!")

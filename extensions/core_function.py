@@ -7,6 +7,7 @@ from termcolor import colored
 from discord.ext import commands, tasks
 
 from storage.system import Constants as constant
+import extensions.db_logic as db
 
 class ApplicationView(discord.ui.View):
     def __init__(self, bot) -> None:
@@ -59,52 +60,7 @@ class ApplicationView(discord.ui.View):
 class CoreFunction(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    #     self.create_table()
-
-
-    # def create_table(self):
-    #     self.execute_statement("""--sql
-    #                 CREATE TABLE IF NOT EXISTS message_storage(
-    #                     id INTEGER PRIMARY KEY
-    #                     message_id TEXT NOT NULL
-    #                     )
-    #                 """, fetch=False)
-    #     self.execute_statement("""--sql INSERT OR IGNORE INTO message_storage (id, message_id) VALUES (1, '')""", fetch=False)
-
-    # def execute_statement(self, statement, fetch=False):
-    #     with closing(sqlite3.connect("storage/database.db")) as conn: # auto-closes
-    #         with conn: # auto-commits
-    #             with closing(conn.cursor()) as cursor: # auto-closes
-    #                 cursor.execute(statement)
-    #                 if fetch:
-    #                     return cursor.fetchone() # returns fetched row
-
-
-    # def load_stored_id(self):
-    #     try:
-    #         row = self.execute_statement("""SELECT message_id FROM message_storage WHERE id = 1""", fetch=True)
-    #         if row is not None: return row[0]
-    #         else: return None
-    #     except:
-    #         return None
-
-
-    # load message ID from json storage for application channel
-    def load_stored_id(self):
-        try:
-            with open('storage/message_id.json', 'r') as file:
-                data = json.load(file)
-                return data.get('message_id', None)
-        except FileNotFoundError:
-            return None
-        except json.JSONDecodeError:
-            return None
-
-
-    # store message ID to json storage for application channel
-    def store_id(self, message_id):
-        with open('storage/message_id.json', 'w') as file:
-            json.dump({'message_id': message_id}, file)
+        self.cog_slash = self.bot.get_cog("SlashCommands")
 
 
     # load whitelist message details from txt storage
@@ -121,7 +77,7 @@ class CoreFunction(commands.Cog):
         last_message = None
         application_channel = self.bot.get_channel(constant.APP_CHANNEL_ID)
         view = ApplicationView(self.bot)
-        stored_message_id = self.load_stored_id()
+        stored_message_id = db.load_stored_id("application")
         whitelist_message = self.load_whitelist_message()
 
         if stored_message_id is not None:
@@ -144,13 +100,13 @@ class CoreFunction(commands.Cog):
         else:
             last_message = await application_channel.send(embed=view.templateEmbed, view=view)
 
-        self.store_id(last_message.id)
+        db.store_id("application" ,last_message.id)
 
 
     # async def update_embed_message(self, self.load_stored_id(), self.load_whitelist_message(), self.bot.get_channel(constant.APP_CHANNEL_ID), ApplicationView(self.bot)):
 
     # BY DOING THIS YOU WILL NEED TO GO BACK THROUGH ALL OTHER FOUR (4) FUNCTION CALLS AND ADD APPROPRIATE PARAMETERS (see next line)
-    # cog_core_function.update_embed_message(cog_core_function.load_stored_id, constant.AVAILABLE_CHANNEL, "Set whether you want to be pinged...", cog_core_function.AvailableRoleView)
+    # cog_core.update_embed_message(cog_core.load_stored_id, constant.AVAILABLE_CHANNEL, "Set whether you want to be pinged...", cog_core.AvailableRoleView)
 
     # async def update_embed_message(self, stored_message_id, embed_channel, embed_message, view):
     #     last_message = None
@@ -195,4 +151,5 @@ class CoreFunction(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(CoreFunction(bot))
+    print("Extension:", colored("core_function.py", "yellow"), "loaded.")
     bot.add_view(ApplicationView(bot)) # IMPORTANT!!!
