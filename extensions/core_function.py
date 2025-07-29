@@ -132,22 +132,6 @@ class CoreFunction(commands.Cog):
         db.store_id(embed_name, last_message.id)
 
 
-    # tasks loop x hours (10080 minutes? or hours and stuff (1 week) - 6 days to account for bad timing or smth)
-    # have original message sent (smth with adding another view (no need to update embed I think))
-    # add 2 buttons to embed, green to get role red to remove role
-        # check if staff regardless, should be in a private thread anyways
-        # give available role | remove available role
-        # fail giving/removing role quietly, only response.send_message() if roles were updated successfully
-    # every @tasksloop, edit the message (check if that makes it not inactive/counts as activity)
-        # if not, try sending/deleting message quickly (will mark channel as unread for everyone, probably want alternative way)
-            # maybe reply to own embed message ephemerally?
-    # should just be able to run `view=AvailabilityRole(self.bot)` then 
-        # nvm will probably need to check if message exists already too -> check if can edit `update_embed_message()` to be more general?
-    # need to add a new constant.CONSTANT as well
-    # using sqlite to store ID probably, can add to existing table for embed_message ID
-    
-
-
 async def setup(bot):
     await bot.add_cog(CoreFunction(bot))
     print("Extension:", colored("core_function.py", "yellow"), "loaded.")
