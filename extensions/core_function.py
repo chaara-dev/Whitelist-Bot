@@ -31,6 +31,7 @@ class ApplicationView(discord.ui.View):
                 )
 
                 await button.response.send_message(f"Your application thread was created at <#{new_thread.id}>.",ephemeral=True)
+                await new_thread.send(f"\n-# <@&{constant.AVAILABLE_ROLE_ID}>")
                 await new_thread.send(embed=self.template_embed)
                 
                 await new_thread.send(f"**Hi <@{button.user.id}>, your whitelist application has been created. Please fill out the above application in the chat here. A staff member will review shortly.**")
