@@ -108,7 +108,6 @@ def update_staff_stats(staff_id, stat_type): # stat_type: approved | denied
     conn.commit()
     conn.close()
 
-
 def get_whitelist_stats():
     conn = sqlite3.connect("storage/database.db")
     c = conn.cursor()
@@ -143,7 +142,16 @@ def get_whitelist_stats():
     hours = math.floor(total_minutes / 60)
     minutes = math.floor(total_minutes % 60)
     
-    return total, approved, denied, hours, minutes, staff_rows
+    return total, approved, denied, hours, minutes, staff_rows, abandoned
+
+def get_open_member_application(user_id):
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM applications WHERE status = 'open' AND user_id = ?", (user_id,))
+    open_apps = c.fetchall()
+    conn.close()
+    return open_apps
+
 
 async def setup(bot):
     initialize_database()

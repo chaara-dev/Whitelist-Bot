@@ -137,6 +137,21 @@ class CoreFunction(commands.Cog):
 
         db.store_id(embed_name, last_message.id)
 
+    async def set_application_abandoned(self, thread_id, user_id):
+        app_thread = await self.bot.fetch_channel(thread_id)
+        user = await self.bot.fetch_user(user_id)
+        log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
+
+        abandoned_embed = discord.Embed(title="Application Abandoned", color=0x4a4a4f)
+        abandoned_embed.add_field(name="User", value=f"<@{user.id}> ({user.name})", inline=True)
+        abandoned_embed.add_field(name="Thread", value=f"<#{app_thread.id}>", inline=False)
+        abandoned_embed.set_thumbnail(url=f"{user.avatar}")
+        abandoned_embed.set_footer(text=f"User ID: {user.id}")
+        abandoned_embed.timestamp = datetime.datetime.now()
+
+        db.mark_application(thread_id, "abandoned", None)
+        await app_thread.edit(name=f"🗑️ {user.name}'s application", locked=True, invitable=False, auto_archive_duration=60)
+        await log_channel.send(embed=abandoned_embed)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -162,6 +177,17 @@ class CoreFunction(commands.Cog):
         ):
             await message.channel.send(f"\n-# New application created. <@&{constant.AVAILABLE_ROLE_ID}>")
             db.update_created_timestamp(thread_id=message.channel.id, user_id=message.author.id)
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: discord.Member):
+        open_apps = db.get_open_member_application(member.id)
+
+        for row in open_apps:
+            applicant_id = row[1]
+            thread_id = row[0]
+
+            if member.id == applicant_id:
+                await self.set_application_abandoned(thread_id, applicant_id)
 
 
 async def setup(bot):

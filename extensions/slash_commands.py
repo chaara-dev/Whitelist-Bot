@@ -260,11 +260,11 @@ class SlashCommands(commands.Cog):
     @user_is_staff()
     async def whitelist_stats(self, interaction):
         stats = db.get_whitelist_stats()
-        # stats indexes: [ [0]total | [1]approved | [2]denied | [3]hours | [4]minutes | [5]staff_rows]
+        # stats indexes: [ [0]total | [1]approved | [2]denied | [3]hours | [4]minutes | [5]staff_rows | [6]abandoned ]
 
         stat_embed = discord.Embed(color=0x3498db, title="📊 Application Statistics")
 
-        stat_embed.add_field(name="Overview", value=f"Total Applications: **`{stats[0]}`**\nApplications Approved: **`{stats[1]}`**\nApplications Denied: **`{stats[2]}`**\nAverage Response Time: **`{stats[3]}h {stats[4]}m`**", inline=False)
+        stat_embed.add_field(name="Overview", value=f"<:BareBones_blue:1401714659635237037> Total Applications: **`{stats[0]}`**\n<:BareBones_green:1401657110147764476> Approved: **`{stats[1]}`**\n<:BareBones_red:1401657161565868134> Denied: **`{stats[2]}`**\n<:BareBones_white:1401665719023829002> Abandoned: **`{stats[6]}`**\nAvg. Response Time: **`{stats[3]}h {stats[4]}m`**", inline=False)
 
         stats_list = f""
         for staff in stats[5]: # staff_rows indexes: [ [0]user_id | [1]approved_count | [2]denied_count ]
@@ -275,7 +275,9 @@ class SlashCommands(commands.Cog):
             stats_list += "\n"
 
         if len(stats_list) > 0:
-            stats_list = "👑" + stats_list
+            stats_list = "<:BareBones_crown:1401690086176849970>" + stats_list
+        elif len(stats_list) == 0:
+            stats_list = "No statistics yet."
 
         stat_embed.add_field(name="Individual Stats", value=stats_list, inline=False)
         stat_embed.timestamp = datetime.datetime.now()
