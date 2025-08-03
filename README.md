@@ -17,15 +17,12 @@
 
 + add try/except methods to things that can break
 
-- don't let people with open applications apply again 
--   (append user ID to list/json on button press, remove when denied)
--   check if a person has applied in the past, update thread to include #2, #3 etc
++ don't let people with open applications apply again 
 
 + add way to whitelist people with no application thread ('/quick-apply')
 
 - add statistics for each staff member that has accepted/denied and average time
 -   timestamp comparison between start application and accept/deny application
--   user id tracking
 
 + Move embed message for application from constants.py to text file storage
 +   '$reload' command to update the application file somehow
@@ -44,5 +41,5 @@
 - "cry about it" onmessage response dead server
 -   1/50 chance of replying or something, and X hours cooldown after
 
-- DM users with details when accepted/denied
+- DM applicant with details when accepted/denied
 ```
