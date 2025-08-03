@@ -1,4 +1,5 @@
 import sqlite3
+import math
 from datetime import datetime
 from termcolor import colored
 
@@ -11,6 +12,7 @@ def initialize_database():
             user_id INTEGER,
             status TEXT,
             created_at TIMESTAMP,
+            application_at TIMESTAMP,
             decision_at TIMESTAMP,
             applicant_reminded INTEGER DEFAULT 0,
             staff_reminded INTEGER DEFAULT 0,
@@ -58,6 +60,13 @@ def insert_application(thread_id, user_id):
     c = conn.cursor()
     c.execute("INSERT OR REPLACE INTO applications (thread_id, user_id, status, created_at) VALUES (?, ?, ?, ?)",
             (thread_id, user_id, 'open', datetime.now()))
+    conn.commit()
+    conn.close()
+
+def update_created_timestamp(thread_id, user_id):
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute("UPDATE applications SET application_at = ? WHERE thread_id = ? AND user_id = ?", (datetime.now(), thread_id, user_id))
     conn.commit()
     conn.close()
 
@@ -119,22 +128,22 @@ def get_whitelist_stats():
     staff_rows = c.fetchall()
 
     c.execute("""--sql
-        SELECT created_at, decision_at FROM applications
+        SELECT application_at, decision_at FROM applications
         WHERE status IN ('approved', 'denied') AND decision_at IS NOT NULL
     """)
     times = c.fetchall()
     conn.close()
 
     total_minutes = 0
-    for created_at, decision_at in times:
-        t1 = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S.%f")
+    for application_at, decision_at in times:
+        t1 = datetime.strptime(application_at, "%Y-%m-%d %H:%M:%S.%f")
         t2 = datetime.strptime(decision_at, "%Y-%m-%d %H:%M:%S.%f")
-        total_minutes += (t2 - t1).total_seconds() / 60
+        total_minutes += (t2-t1).total_seconds() / 60
 
-    avg_minutes = round(total_minutes / len(times)) if times else 0
-    avg_hours = round(avg_minutes / 60) if times else 0
+    hours = math.floor(total_minutes / 60)
+    minutes = math.floor(total_minutes % 60)
     
-    return total, approved, denied, avg_minutes, avg_hours, staff_rows
+    return total, approved, denied, hours, minutes, staff_rows
 
 async def setup(bot):
     initialize_database()

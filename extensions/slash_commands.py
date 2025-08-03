@@ -146,7 +146,7 @@ class SlashCommands(commands.Cog):
                 public_approved_embed.description = f"Client Type: **{client_type.name}**\nMinecraft Name: **{minecraft_name}**\n\n{message}"
                 public_approved_embed.timestamp = datetime.datetime.now()
 
-                db.mark_application(thread_id=command_channel.id, status="closed", reviewer_id=user_id)
+                db.mark_application(thread_id=command_channel.id, status="approved", reviewer_id=user_id)
                 db.update_staff_stats(staff_id=user_id, stat_type="approved")
 
                 await command_channel.send(embed=public_approved_embed)
@@ -260,11 +260,28 @@ class SlashCommands(commands.Cog):
     @user_is_staff()
     async def whitelist_stats(self, interaction):
         stats = db.get_whitelist_stats()
-        # stats indexes: [total | approved | denied | avg_minutes | avg_hours | staff_rows]
+        # stats indexes: [ [0]total | [1]approved | [2]denied | [3]hours | [4]minutes | [5]staff_rows]
 
-        stat_embed = discord.Embed(color=0x3498db, title="📊Application Statistics")
+        stat_embed = discord.Embed(color=0x3498db, title="📊 Application Statistics")
 
-        await interaction.response.send_message(embed=stat_embed)
+        stat_embed.add_field(name="Overview", value=f"Total Applications: **`{stats[0]}`**\nApplications Approved: **`{stats[1]}`**\nApplications Denied: **`{stats[2]}`**\nAverage Response Time: **`{stats[3]}h {stats[4]}m`**", inline=False)
+
+        stats_list = f""
+        for staff in stats[5]: # staff_rows indexes: [ [0]user_id | [1]approved_count | [2]denied_count ]
+            stats_list += f"<@{staff[0]}>: "
+            stats_list += f"<:BareBones_green:1401657110147764476> {staff[1]}"
+            stats_list += f" | "
+            stats_list += f"{staff[2]} <:BareBones_red:1401657161565868134>"
+            stats_list += "\n"
+
+        if len(stats_list) > 0:
+            stats_list = "👑" + stats_list
+
+        stat_embed.add_field(name="Individual Stats", value=stats_list, inline=False)
+        stat_embed.timestamp = datetime.datetime.now()
+
+        message_del_at = int((datetime.datetime.now() + datetime.timedelta(seconds=45)).timestamp())
+        await interaction.response.send_message(content=f"-# This message will delete in <t:{message_del_at}:R>", embed=stat_embed, delete_after=45)
 
 
     # global SlashCommands Cog error handler

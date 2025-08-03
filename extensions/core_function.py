@@ -57,7 +57,7 @@ class ApplicationView(discord.ui.View):
                     await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a staff member.", ephemeral=True)
             elif db.has_open_application(user_id):
                 try:
-                    await button.response.send_message(f"**You already have an open application at <#{db.get_open_application_id(user_id)}>. Please fill that one out or wait to be accepted.", ephemeral=True)
+                    await button.response.send_message(f"**You already have an open application at <#{db.get_open_application_id(user_id)}>**. Please fill that one out or wait to be accepted.", ephemeral=True)
                 except Exception as error:
                     print(f"error: {error}")
                     await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a staff member.", ephemeral=True)
@@ -153,6 +153,7 @@ class CoreFunction(commands.Cog):
             ("java" in app_msg or "bedrock" in app_msg) and "yes" in app_msg
         ):
             await message.channel.send(f"\n-# New application created. <@&{constant.AVAILABLE_ROLE_ID}>")
+            db.update_created_timestamp(thread_id=message.channel.id, user_id=message.author.id)
 
 
 async def setup(bot):

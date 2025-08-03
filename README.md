@@ -11,8 +11,6 @@
 
 + disallow members to apply
 
-! re-whitelist button for members to get re-added [MAYBE]
-
 + edit old embed application message when bot start
 
 + add try/except methods to things that can break
@@ -21,10 +19,7 @@
 
 + add way to whitelist people with no application thread ('/quick-apply')
 
-! add statistics for each staff member that has accepted/denied and average time [WIP]
-
-+ Move embed message for application from constants.py to text file storage
-+   '$reload' command to update the application file somehow
++ add statistics for each staff member that has accepted/denied and average time
 
 + send whitelist commands to #mc-chat
 
@@ -41,4 +36,8 @@
 -   1/50 chance of replying or something, and X hours cooldown after
 
 - DM applicant with details when accepted/denied
+
+- custom profile picture/banner
+
+- ability to set which channels are which with a slash command /set-channel [type (app/logs/get-role/etc)] [#channel-id]
 ```
