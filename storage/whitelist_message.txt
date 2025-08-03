@@ -14,5 +14,5 @@ Where did you find out about us?:
 Why are you interested in joining?: 
 What is your favorite thing about Minecraft?: 
 What is the Keyword?: 
-Do you agree to our server's rules?:
+Do you agree to our server's rules?: 
 ```
