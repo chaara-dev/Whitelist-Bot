@@ -20,7 +20,8 @@ class ApplicationView(discord.ui.View):
     async def button_callback(self, button, interaction):
         try:
             channel = self.bot.get_channel(constant.APP_CHANNEL_ID)
-            if button.user.get_role(constant.MEMBER_ROLE_ID) is None: # or button.user.id == constant.OWNER_ID:
+            user_id = button.user.id
+            if button.user.get_role(constant.MEMBER_ROLE_ID) is None and not db.has_open_application(user_id):
                 new_thread = await channel.create_thread(
                     name=f"{button.user.name} application", 
                     message=None, 
@@ -29,22 +30,21 @@ class ApplicationView(discord.ui.View):
                     reason=None,
                     invitable=False
                 )
+                db.insert_application(thread_id=new_thread.id, user_id=user_id)
 
                 await button.response.send_message(f"Your application thread was created at <#{new_thread.id}>.",ephemeral=True)
-                await new_thread.send(f"\n-# <@&{constant.AVAILABLE_ROLE_ID}>")
-                await new_thread.send(embed=self.template_embed)
-                
-                await new_thread.send(f"**Hi <@{button.user.id}>, your whitelist application has been created. Please fill out the above application in the chat here. A staff member will review shortly.**")
+                await new_thread.send(f"Hi <@{user_id}>, your whitelist application has been created.", embed=self.template_embed)
+                await new_thread.send("# [COPY AND PASTE THE APPLICATION FORM INTO THIS CHANNEL.]\nA staff member will review shortly.")
 
 
                 logEmbed = discord.Embed(title="Application Created",
-                                        description=f"**User**\n<@{button.user.id}>",
+                                        description=f"**User**\n<@{user_id}>",
                                         color=0x4654c0,
                                         timestamp=datetime.datetime.now()
                                         )
                 logEmbed.add_field(name="Thread Link", value=f"<#{new_thread.id}>", inline=False)
                 logEmbed.set_thumbnail(url=f"{button.user.avatar}")
-                logEmbed.set_footer(text=f"User ID: {button.user.id}")
+                logEmbed.set_footer(text=f"User ID: {user_id}")
                 
                 logs = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
                 await logs.send(embed=logEmbed)
@@ -52,11 +52,17 @@ class ApplicationView(discord.ui.View):
             elif button.user.get_role(constant.MEMBER_ROLE_ID):
                 try:
                     await button.response.send_message(f"**You've already applied for the whitelist.**\nIf you have since been removed, please contact a staff member or make a <#{constant.SUPPORT_CHANNEL_ID}> post.", ephemeral=True)
-                except Exception as idfk:
-                    print(f"error: {idfk}")
+                except Exception as error:
+                    print(f"error: {error}")
                     await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a staff member.", ephemeral=True)
-        except Exception as e:
-            print(f"ERROR: {e}")
+            elif db.has_open_application(user_id):
+                try:
+                    await button.response.send_message(f"**You already have an open application at <#{db.get_open_application_id(user_id)}>. Please fill that one out or wait to be accepted.", ephemeral=True)
+                except Exception as error:
+                    print(f"error: {error}")
+                    await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a staff member.", ephemeral=True)
+        except Exception as error:
+            print(f"BUTTON CALLBACK FUNCTION ERROR: {error}")
 
 class AvailableRoleView(discord.ui.View):
     def __init__(self, bot) -> None:
@@ -130,6 +136,23 @@ class CoreFunction(commands.Cog):
             last_message = await embed_channel.send(embed=view_embed, view=view)
 
         db.store_id(embed_name, last_message.id)
+
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if (message.author == self.bot.user or
+            message.channel.type != discord.ChannelType.private_thread or
+            message.channel.parent_id != constant.APP_CHANNEL_ID or
+            message.author.get_role(constant.STAFF_ROLE_ID) is not None
+        ):
+            return
+
+        app_msg = message.content.lower()
+
+        if (("andesite" in app_msg or "keyword" in app_msg) and
+            ("java" in app_msg or "bedrock" in app_msg) and "yes" in app_msg
+        ):
+            await message.channel.send(f"\n-# New application created. <@&{constant.AVAILABLE_ROLE_ID}>")
 
 
 async def setup(bot):

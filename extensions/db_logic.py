@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 from termcolor import colored
 
 def initialize_database():
@@ -51,6 +52,41 @@ def store_id(embed_name, message_id):
             (embed_name, message_id, message_id))
     conn.commit()
     conn.close()
+
+def insert_application(thread_id, user_id):
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute("INSERT OR IGNORE INTO applications (thread_id, user_id, status, created_at) VALUES (?, ?, ?, ?)",
+            (thread_id, user_id, 'open', datetime.datetime.now()))
+    conn.commit()
+    conn.close()
+
+def mark_application(thread_id, status, reviewer_id=None):
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute("UPDATE applications SET status = ?, decision_at = ?, reviewer_id = ? WHERE thread_id = ?",
+            (status, datetime.datetime.now(), reviewer_id, thread_id))
+    conn.commit()
+    conn.close()
+
+def has_open_application(user_id):
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM applications WHERE status = 'open' AND user_id = ?", (user_id,))
+    result = c.fetchone()
+    conn.close()
+    if result is not None:
+        return True
+    else:
+        return False
+
+def get_open_application_id(user_id):
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute("SELECT thread_id FROM applications WHERE status = 'open' AND user_id = ?", (user_id,))
+    result = c.fetchone()
+    conn.close()
+    return result[0]
 
 
 async def setup(bot):
