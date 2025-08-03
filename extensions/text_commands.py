@@ -19,11 +19,8 @@ class TextCommands(commands.Cog):
 
         if context.author.id == constant.OWNER_ID:
             await self.bot.reload_extension("extensions.text_commands")
-            print("Extension:", colored("text_commands.py", "yellow"), "reloaded.")
             await self.bot.reload_extension("extensions.slash_commands")
-            print("Extension:", colored("slash_commands.py", "yellow"), "reloaded.")
             await self.bot.reload_extension("extensions.core_function")
-            print("Extension:", colored("core_function.py", "yellow"), "reloaded.")
 
             await cog_core.update_embed_message(
                 stored_message_id=db.load_stored_id("application"),
