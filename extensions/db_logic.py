@@ -1,5 +1,5 @@
 import sqlite3
-import datetime
+from datetime import datetime
 from termcolor import colored
 
 def initialize_database():
@@ -24,7 +24,7 @@ def initialize_database():
         )
     """)
     c.execute("""--sql
-        CREATE TABLE IF NOT EXISTS app_stats (
+        CREATE TABLE IF NOT EXISTS staff_stats (
             staff_id INTEGER PRIMARY KEY,
             approved INTEGER DEFAULT 0,
             denied INTEGER DEFAULT 0
@@ -56,29 +56,29 @@ def store_id(embed_name, message_id):
 def insert_application(thread_id, user_id):
     conn = sqlite3.connect("storage/database.db")
     c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO applications (thread_id, user_id, status, created_at) VALUES (?, ?, ?, ?)",
-            (thread_id, user_id, 'open', datetime.datetime.now()))
+    c.execute("INSERT OR REPLACE INTO applications (thread_id, user_id, status, created_at) VALUES (?, ?, ?, ?)",
+            (thread_id, user_id, 'open', datetime.now()))
     conn.commit()
     conn.close()
 
-def mark_application(thread_id, status, reviewer_id=None):
+def mark_application(thread_id, status, reviewer_id=None): # status: open | approved | denied | abandoned
     conn = sqlite3.connect("storage/database.db")
     c = conn.cursor()
     c.execute("UPDATE applications SET status = ?, decision_at = ?, reviewer_id = ? WHERE thread_id = ?",
-            (status, datetime.datetime.now(), reviewer_id, thread_id))
+            (status, datetime.now(), reviewer_id, thread_id))
     conn.commit()
     conn.close()
 
 def has_open_application(user_id):
     conn = sqlite3.connect("storage/database.db")
     c = conn.cursor()
-    c.execute("SELECT 1 FROM applications WHERE status = 'open' AND user_id = ?", (user_id,))
-    result = c.fetchone()
+    c.execute("""--sql
+        SELECT COUNT(*) FROM applications
+        WHERE user_id = ? AND status IN ('open', 'approved')
+    """, (user_id,))
+    count = c.fetchone()[0]
     conn.close()
-    if result is not None:
-        return True
-    else:
-        return False
+    return count > 0
 
 def get_open_application_id(user_id):
     conn = sqlite3.connect("storage/database.db")
@@ -88,6 +88,53 @@ def get_open_application_id(user_id):
     conn.close()
     return result[0]
 
+def update_staff_stats(staff_id, stat_type): # stat_type: approved | denied
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute(f"""--sql
+        INSERT INTO staff_stats (staff_id, {stat_type})
+        VALUES (?, 1)
+        ON CONFLICT(staff_id) DO UPDATE SET {stat_type} = {stat_type} + 1
+    """, (staff_id,))
+    conn.commit()
+    conn.close()
+
+
+def get_whitelist_stats():
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM applications")
+    total = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM applications WHERE status = 'approved'")
+    approved = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM applications WHERE status = 'denied'")
+    denied = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM applications WHERE status = 'abandoned'")
+    abandoned = c.fetchone()[0]
+
+    c.execute("SELECT staff_id, approved, denied FROM staff_stats ORDER BY approved DESC, denied DESC")
+    staff_rows = c.fetchall()
+
+    c.execute("""--sql
+        SELECT created_at, decision_at FROM applications
+        WHERE status IN ('approved', 'denied') AND decision_at IS NOT NULL
+    """)
+    times = c.fetchall()
+    conn.close()
+
+    total_minutes = 0
+    for created_at, decision_at in times:
+        t1 = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S.%f")
+        t2 = datetime.strptime(decision_at, "%Y-%m-%d %H:%M:%S.%f")
+        total_minutes += (t2 - t1).total_seconds() / 60
+
+    avg_minutes = round(total_minutes / len(times)) if times else 0
+    avg_hours = round(avg_minutes / 60) if times else 0
+    
+    return total, approved, denied, avg_minutes, avg_hours, staff_rows
 
 async def setup(bot):
     initialize_database()

@@ -136,6 +136,7 @@ class SlashCommands(commands.Cog):
                 log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
                 chat_channel = self.bot.get_channel(constant.CHAT_CHANNEL_ID)
                 member_role = interaction.guild.get_role(constant.MEMBER_ROLE_ID)
+                user_id = interaction.user.id
 
                 approved_embed = await self.fill_embed(interaction, True, user, minecraft_name, client_type, None)
                 approved_embed.title = "Application Approved"
@@ -144,6 +145,9 @@ class SlashCommands(commands.Cog):
                 public_approved_embed = discord.Embed(title="✅ Application Approved", color=0x72c87a)
                 public_approved_embed.description = f"Client Type: **{client_type.name}**\nMinecraft Name: **{minecraft_name}**\n\n{message}"
                 public_approved_embed.timestamp = datetime.datetime.now()
+
+                db.mark_application(thread_id=command_channel.id, status="closed", reviewer_id=user_id)
+                db.update_staff_stats(staff_id=user_id, stat_type="approved")
 
                 await command_channel.send(embed=public_approved_embed)
                 await log_channel.send(embed=approved_embed)
@@ -161,14 +165,18 @@ class SlashCommands(commands.Cog):
     async def deny(self, interaction, user: discord.Member, reason: str ):
             command_channel = interaction.channel
             log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
+            user_id = interaction.user.id
 
             deniedEmbed = await self.fill_embed(interaction, False, user, None, None, reason)
             deniedEmbed.title = "Application Denied"
             deniedEmbed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
 
             publicDeniedEmbed = discord.Embed(title="❌ Application Denied", color=0xe74d3c)
-            publicDeniedEmbed.description = f"Application denied by <@{interaction.user.id}>\nReason: `{reason}`"
+            publicDeniedEmbed.description = f"Application denied by <@{user_id}>\nReason: `{reason}`"
             publicDeniedEmbed.timestamp = datetime.datetime.now()
+
+            db.mark_application(thread_id=command_channel.id, status="denied", reviewer_id=user_id)
+            db.update_staff_stats(staff_id=user_id, stat_type="denied")
 
             await interaction.response.send_message("Application Denied.", ephemeral=True)
             await command_channel.send(embed=publicDeniedEmbed)
@@ -184,9 +192,12 @@ class SlashCommands(commands.Cog):
             log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
             chat_channel = self.bot.get_channel(constant.CHAT_CHANNEL_ID)
             member_role = interaction.guild.get_role(constant.MEMBER_ROLE_ID)
+            user_id = interaction.user.id
 
             approvedEmbed = await self.fill_embed(interaction, True, user, minecraft_name, client_type, None)
             approvedEmbed.title = "Application Quick Approved"
+
+            db.update_staff_stats(staff_id=user_id, stat_type="approved")
 
             user_update_status = await self.update_user(user, minecraft_name, member_role)
             await interaction.response.send_message(f"{user_update_status}", ephemeral=True)
@@ -243,6 +254,17 @@ class SlashCommands(commands.Cog):
                 view_embed=ext_core.ApplicationView(self.bot).template_embed
             )
             await interaction.edit_original_response(content=f"<#{constant.APP_CHANNEL_ID}> whitelist embed message updated.")
+
+
+    @app_commands.command(name="whitelist_stats", description="Display approved/denied statistics for whitelist applications.")
+    @user_is_staff()
+    async def whitelist_stats(self, interaction):
+        stats = db.get_whitelist_stats()
+        # stats indexes: [total | approved | denied | avg_minutes | avg_hours | staff_rows]
+
+        stat_embed = discord.Embed(color=0x3498db, title="📊Application Statistics")
+
+        await interaction.response.send_message(embed=stat_embed)
 
 
     # global SlashCommands Cog error handler

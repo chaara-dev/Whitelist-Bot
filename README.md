@@ -21,8 +21,7 @@
 
 + add way to whitelist people with no application thread ('/quick-apply')
 
-- add statistics for each staff member that has accepted/denied and average time
--   timestamp comparison between start application and accept/deny application
+! add statistics for each staff member that has accepted/denied and average time [WIP]
 
 + Move embed message for application from constants.py to text file storage
 +   '$reload' command to update the application file somehow
