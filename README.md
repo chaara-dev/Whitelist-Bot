@@ -40,4 +40,6 @@
 - custom profile picture/banner
 
 - ability to set which channels are which with a slash command /set-channel [type (app/logs/get-role/etc)] [#channel-id]
+
+- automatically close thread and mark as abandoned if user leaves server
 ```
