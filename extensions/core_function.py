@@ -150,7 +150,15 @@ class CoreFunction(commands.Cog):
         app_msg = message.content.lower()
 
         if (("andesite" in app_msg or "keyword" in app_msg) and
-            ("java" in app_msg or "bedrock" in app_msg) and "yes" in app_msg
+            ("java" in app_msg or "bedrock" in app_msg) and 
+            ("yes" in app_msg or 
+            "yup" in app_msg or 
+            "yep" in app_msg or 
+            "yeah" in app_msg or 
+            "agree" in app_msg or 
+            "indeed" in app_msg or 
+            "ofc" in app_msg or 
+            "course" in app_msg)
         ):
             await message.channel.send(f"\n-# New application created. <@&{constant.AVAILABLE_ROLE_ID}>")
             db.update_created_timestamp(thread_id=message.channel.id, user_id=message.author.id)
