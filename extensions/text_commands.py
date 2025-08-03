@@ -21,6 +21,7 @@ class TextCommands(commands.Cog):
             await self.bot.reload_extension("extensions.text_commands")
             await self.bot.reload_extension("extensions.slash_commands")
             await self.bot.reload_extension("extensions.core_function")
+            await self.bot.reload_extension("extensions.db_logic")
 
             await cog_core.update_embed_message(
                 stored_message_id=db.load_stored_id("application"),

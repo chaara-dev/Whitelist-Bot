@@ -38,7 +38,7 @@ class ApplicationView(discord.ui.View):
 
 
                 logEmbed = discord.Embed(title="Application Created",
-                                        description=f"**User**\n<@{user_id}>",
+                                        description=f"**User**\n<@{user_id}> ({button.user.name})",
                                         color=0x4654c0,
                                         timestamp=datetime.datetime.now()
                                         )
@@ -100,7 +100,7 @@ class AvailableRoleView(discord.ui.View):
             await button.response.send_message("Something went wrong while removing your `Available` role.")
 
 class CoreFunction(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: discord.BotIntegration):
         self.bot = bot
         self.cog_slash = self.bot.get_cog("SlashCommands")
 

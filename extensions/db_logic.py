@@ -14,8 +14,6 @@ def initialize_database():
             created_at TIMESTAMP,
             application_at TIMESTAMP,
             decision_at TIMESTAMP,
-            applicant_reminded INTEGER DEFAULT 0,
-            staff_reminded INTEGER DEFAULT 0,
             reviewer_id INTEGER
         )
     """)
