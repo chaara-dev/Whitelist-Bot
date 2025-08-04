@@ -170,10 +170,10 @@ def get_all_open_applications():
     conn.close()
     return open_apps
 
-def mark_applicant_reminded(thread_id, stage): # stage: none | warning | final_warning | complete
+def mark_applicant_reminded(thread_id, reminded_stage): # stage: none | warning | final_warning | complete
     conn = sqlite3.connect("storage/database.db")
     c = conn.cursor()
-    c.execute("UPDATE applications SET reminded_stage = ? WHERE thread_id = ?", (stage, thread_id))
+    c.execute("UPDATE applications SET reminded_stage = ? WHERE thread_id = ?", (reminded_stage, thread_id))
     conn.commit()
     conn.close()
 

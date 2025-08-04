@@ -146,6 +146,7 @@ class SlashCommands(commands.Cog):
                 public_approved_embed.description = f"Client Type: **{client_type.name}**\nMinecraft Name: **{minecraft_name}**\n\n{message}"
                 public_approved_embed.timestamp = datetime.datetime.now()
 
+                db.mark_applicant_reminded(command_channel.id, "complete")
                 db.mark_application(thread_id=command_channel.id, status="approved", reviewer_id=user_id)
                 db.update_staff_stats(staff_id=user_id, stat_type="approved")
 
@@ -175,12 +176,15 @@ class SlashCommands(commands.Cog):
             publicDeniedEmbed.description = f"Application denied by <@{user_id}>\nReason: `{reason}`"
             publicDeniedEmbed.timestamp = datetime.datetime.now()
 
+            db.mark_applicant_reminded(command_channel.id, "complete")
             db.mark_application(thread_id=command_channel.id, status="denied", reviewer_id=user_id)
             db.update_staff_stats(staff_id=user_id, stat_type="denied")
 
             await interaction.response.send_message("Application Denied.", ephemeral=True)
             await command_channel.send(embed=publicDeniedEmbed)
             await log_channel.send(embed=deniedEmbed)
+            
+            await command_channel.edit(name=f"❌ {user.name}'s application", locked=True, invitable=False, auto_archive_duration=60)
 
 
     # approve a whitelist application without being in application thread
@@ -197,6 +201,7 @@ class SlashCommands(commands.Cog):
             approvedEmbed = await self.fill_embed(interaction, True, user, minecraft_name, client_type, None)
             approvedEmbed.title = "Application Quick Approved"
 
+            db.mark_application(thread_id=None, status="approved", reviewer_id=user_id)
             db.update_staff_stats(staff_id=user_id, stat_type="approved")
 
             user_update_status = await self.update_user(user, minecraft_name, member_role)
@@ -209,7 +214,7 @@ class SlashCommands(commands.Cog):
 
     # update whitelist message in #apply-here embed
     @app_commands.command(name="update-whitelist-message", description="Update whitelist embed message.")
-    # @user_is_owner()
+    @user_is_owner()
     async def update_whitelist_message(self, interaction : discord.Interaction):
         def check_owner_message(m):
             return interaction.user == m.author
