@@ -1,7 +1,6 @@
 import discord
-import datetime
-import json
-import sqlite3
+import asyncio
+from datetime import datetime
 from contextlib import closing
 from termcolor import colored
 from discord.ext import commands, tasks
@@ -23,7 +22,7 @@ class ApplicationView(discord.ui.View):
             user_id = button.user.id
             if button.user.get_role(constant.MEMBER_ROLE_ID) is None and not db.has_open_application(user_id):
                 new_thread = await channel.create_thread(
-                    name=f"{button.user.name} application", 
+                    name=f"{button.user.name}'s application", 
                     message=None, 
                     auto_archive_duration=1440, 
                     type=discord.ChannelType.private_thread, 
@@ -40,7 +39,7 @@ class ApplicationView(discord.ui.View):
                 logEmbed = discord.Embed(title="Application Created",
                                         description=f"**User**\n<@{user_id}> ({button.user.name})",
                                         color=0x4654c0,
-                                        timestamp=datetime.datetime.now()
+                                        timestamp=datetime.now()
                                         )
                 logEmbed.add_field(name="Thread Link", value=f"<#{new_thread.id}>", inline=False)
                 logEmbed.set_thumbnail(url=f"{button.user.avatar}")
@@ -103,6 +102,56 @@ class CoreFunction(commands.Cog):
     def __init__(self, bot: discord.BotIntegration):
         self.bot = bot
         self.cog_slash = self.bot.get_cog("SlashCommands")
+        self.check_application_status.start()
+
+
+    def cog_unload(self):
+        self.check_application_status.cancel()
+
+    @tasks.loop(seconds=10)
+    async def check_application_status(self):
+        now = datetime.now()
+        open_apps = db.get_all_open_applications()
+
+        for row in open_apps:
+            thread_id = row[0]
+            applicant_id = row[1]
+            created_at = row[3]
+            reminded_stage = row[4]
+            application_at = row[5]
+            if application_at is not None:
+                continue
+            hours_open = (now - datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S.%f")).total_seconds() / 60
+
+            if reminded_stage == "none" and hours_open >= 2:
+                thread = self.bot.get_channel(thread_id)
+                if thread:
+                    await thread.send(f"⏰ <@{applicant_id}> Please complete your whitelist application!")
+                    db.mark_applicant_reminded(thread_id, "warning")
+            elif reminded_stage == "warning" and hours_open >= 4:
+                thread = self.bot.get_channel(thread_id)
+                if thread:
+                    await delete_last_bot_message(self, thread)
+                    await thread.send(f"⏰❗ <@{applicant_id}> **Final reminder!** Please complete your application!")
+                    db.mark_applicant_reminded(thread_id, "final_warning")
+            elif reminded_stage == "final_warning" and hours_open >= 6:
+                thread = self.bot.get_channel(thread_id)
+                if thread:
+                    await delete_last_bot_message(self, thread)
+                    embed = discord.Embed(
+                        color=0x4a4a4f, 
+                        title="🪦 Application Automatically Closed", 
+                        description=f"Application was not completed. If you would still like to join, please apply again at <#{constant.APP_CHANNEL_ID}>",
+                        timestamp=datetime.now()
+                    )
+                    await thread.send(content=f"-# <@{applicant_id}>", embed=embed)
+
+                db.mark_applicant_reminded(thread_id, "complete")
+                await self.set_application_abandoned(thread_id, applicant_id)
+
+    @check_application_status.before_loop
+    async def before_check_application_reminders(self):
+        await self.bot.wait_until_ready()
 
 
     # load whitelist message details from txt storage
@@ -147,11 +196,18 @@ class CoreFunction(commands.Cog):
         abandoned_embed.add_field(name="Thread", value=f"<#{app_thread.id}>", inline=False)
         abandoned_embed.set_thumbnail(url=f"{user.avatar}")
         abandoned_embed.set_footer(text=f"User ID: {user.id}")
-        abandoned_embed.timestamp = datetime.datetime.now()
+        abandoned_embed.timestamp = datetime.now()
 
         db.mark_application(thread_id, "abandoned", None)
         await app_thread.edit(name=f"🗑️ {user.name}'s application", locked=True, invitable=False, auto_archive_duration=60)
         await log_channel.send(embed=abandoned_embed)
+
+async def delete_last_bot_message(self, channel):
+    async for message in channel.history(limit=10):
+        if message.author == self.bot.user:
+            await message.delete()
+            break
+
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -161,7 +217,6 @@ class CoreFunction(commands.Cog):
             message.author.get_role(constant.STAFF_ROLE_ID) is not None
         ):
             return
-
         app_msg = message.content.lower()
 
         if (("andesite" in app_msg or "keyword" in app_msg) and
@@ -176,11 +231,12 @@ class CoreFunction(commands.Cog):
             "course" in app_msg)
         ):
             await message.channel.send(f"\n-# New application created. <@&{constant.AVAILABLE_ROLE_ID}>")
+            db.mark_applicant_reminded(message.channel.id, "complete")
             db.update_created_timestamp(thread_id=message.channel.id, user_id=message.author.id)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
-        open_apps = db.get_open_member_application(member.id)
+        open_apps = db.get_open_application_members(member.id)
 
         for row in open_apps:
             applicant_id = row[1]

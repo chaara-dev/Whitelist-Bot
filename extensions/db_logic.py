@@ -12,6 +12,7 @@ def initialize_database():
             user_id INTEGER,
             status TEXT,
             created_at TIMESTAMP,
+            reminded_stage TEXT DEFAULT "none",
             application_at TIMESTAMP,
             decision_at TIMESTAMP,
             reviewer_id INTEGER
@@ -125,19 +126,18 @@ def get_whitelist_stats():
     staff_rows = c.fetchall()
 
     c.execute("""--sql
-        SELECT created_at, application_at, decision_at FROM applications
+        SELECT application_at, decision_at FROM applications
         WHERE status IN ('approved', 'denied') 
         AND created_at IS NOT NULL 
-        AND decision_at IS NOT NULL
+        AND application_at IS NOT NULL
     """)
     times = c.fetchall()
     conn.close()
 
     total_minutes = 0
-    for created_at, application_at, decision_at in times:
-        start_time = application_at if application_at else created_at
+    for application_at, decision_at in times:
         
-        t1 = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S.%f")
+        t1 = datetime.strptime(application_at, "%Y-%m-%d %H:%M:%S.%f")
         t2 = datetime.strptime(decision_at, "%Y-%m-%d %H:%M:%S.%f")
         total_minutes += (t2-t1).total_seconds() / 60
 
@@ -146,7 +146,7 @@ def get_whitelist_stats():
     
     return total, approved, denied, hours, minutes, staff_rows, abandoned
 
-def get_open_member_application(user_id):
+def get_open_member_applications(user_id):
     conn = sqlite3.connect("storage/database.db")
     c = conn.cursor()
     c.execute("SELECT * FROM applications WHERE status = 'open' AND user_id = ?", (user_id,))
@@ -154,6 +154,28 @@ def get_open_member_application(user_id):
     conn.close()
     return open_apps
 
+def get_open_application_threads(thread_id):
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM applications WHERE status = 'open' AND thread_id = ?", (thread_id,))
+    open_apps = c.fetchall()
+    conn.close()
+    return open_apps
+
+def get_all_open_applications():
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM applications WHERE status = 'open'")
+    open_apps = c.fetchall()
+    conn.close()
+    return open_apps
+
+def mark_applicant_reminded(thread_id, stage): # stage: none | warning | final_warning | complete
+    conn = sqlite3.connect("storage/database.db")
+    c = conn.cursor()
+    c.execute("UPDATE applications SET reminded_stage = ? WHERE thread_id = ?", (stage, thread_id))
+    conn.commit()
+    conn.close()
 
 async def setup(bot):
     initialize_database()
