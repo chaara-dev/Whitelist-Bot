@@ -209,7 +209,7 @@ class SlashCommands(commands.Cog):
 
     # update whitelist message in #apply-here embed
     @app_commands.command(name="update-whitelist-message", description="Update whitelist embed message.")
-    @user_is_owner()
+    # @user_is_owner()
     async def update_whitelist_message(self, interaction : discord.Interaction):
         def check_owner_message(m):
             return interaction.user == m.author
@@ -225,7 +225,11 @@ class SlashCommands(commands.Cog):
         check_message = edited_message.content.lower().strip()
         cog_core = self.bot.get_cog("CoreFunction")
 
-        if check_message == "cancel" or check_message == "quit" or check_message[0] == "$":
+        if edited_message.attachments:
+            await edited_message.delete()
+            await interaction.edit_original_response(content="Command cancelled. You cannot set the whitelist message as an attachment.")
+
+        elif check_message == "cancel" or check_message == "quit" or check_message[0] == "$":
             await edited_message.delete()
             await interaction.edit_original_response(content="Command cancelled.")
 
@@ -282,8 +286,9 @@ class SlashCommands(commands.Cog):
         stat_embed.add_field(name="Individual Stats", value=stats_list, inline=False)
         stat_embed.timestamp = datetime.datetime.now()
 
-        message_del_at = int((datetime.datetime.now() + datetime.timedelta(seconds=45)).timestamp())
-        await interaction.response.send_message(content=f"-# This message will delete in <t:{message_del_at}:R>", embed=stat_embed, delete_after=45)
+        # message_del_at = int((datetime.datetime.now() + datetime.timedelta(seconds=45)).timestamp())
+        # await interaction.response.send_message(content=f"-# This message will delete in <t:{message_del_at}:R>", embed=stat_embed, delete_after=45)
+        await interaction.response.send_message(embed=stat_embed)
 
 
     # global SlashCommands Cog error handler

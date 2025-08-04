@@ -126,7 +126,7 @@ def get_whitelist_stats():
 
     c.execute("""--sql
         SELECT application_at, decision_at FROM applications
-        WHERE status IN ('approved', 'denied') AND decision_at IS NOT NULL
+        WHERE status IN ('approved', 'denied') AND decision_at IS NOT NULL AND application_at IS NOT NULL
     """)
     times = c.fetchall()
     conn.close()
