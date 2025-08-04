@@ -125,15 +125,19 @@ def get_whitelist_stats():
     staff_rows = c.fetchall()
 
     c.execute("""--sql
-        SELECT application_at, decision_at FROM applications
-        WHERE status IN ('approved', 'denied') AND decision_at IS NOT NULL AND application_at IS NOT NULL
+        SELECT created_at, application_at, decision_at FROM applications
+        WHERE status IN ('approved', 'denied') 
+        AND created_at IS NOT NULL 
+        AND decision_at IS NOT NULL
     """)
     times = c.fetchall()
     conn.close()
 
     total_minutes = 0
-    for application_at, decision_at in times:
-        t1 = datetime.strptime(application_at, "%Y-%m-%d %H:%M:%S.%f")
+    for created_at, application_at, decision_at in times:
+        start_time = application_at if application_at else created_at
+        
+        t1 = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S.%f")
         t2 = datetime.strptime(decision_at, "%Y-%m-%d %H:%M:%S.%f")
         total_minutes += (t2-t1).total_seconds() / 60
 
