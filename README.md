@@ -25,8 +25,6 @@
 
 + add ping role for 'available to accept'
 
-! add ping after X hours as reminder to approve/finish whitelist [MAYBE]
-
 + split various functions into smaller or more generalized functions [WIP]
 +   also do the same for the '/approve' and '/deny' commands -> remove lots of duplicate code
 
@@ -37,9 +35,9 @@
 
 - DM applicant with details when accepted/denied
 
-- custom profile picture/banner
++ custom profile picture/banner
 
-- ability to set which channels are which with a slash command /set-channel [type (app/logs/get-role/etc)] [#channel-id]
+! ability to set which channels are which with a slash command /set-channel [type (app/logs/get-role/etc)] [#channel-id]
 
-- automatically close thread and mark as abandoned if user leaves server
++ automatically close thread and mark as abandoned if user leaves server
 ```
