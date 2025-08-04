@@ -13,6 +13,7 @@ from itertools import cycle
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
+intents.guilds = True
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=intents)
 
 bot_status_list = cycle([
