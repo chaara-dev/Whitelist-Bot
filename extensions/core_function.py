@@ -108,7 +108,7 @@ class CoreFunction(commands.Cog):
     def cog_unload(self):
         self.check_application_status.cancel()
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(minutes=5)
     async def check_application_status(self):
         now = datetime.now()
         open_apps = db.get_all_open_applications()
@@ -121,7 +121,7 @@ class CoreFunction(commands.Cog):
             application_at = row[5]
             if application_at is not None:
                 continue
-            hours_open = (now - datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S.%f")).total_seconds() / 60
+            hours_open = (now - datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S.%f")).total_seconds() / 3600
 
             if reminded_stage == "none" and hours_open >= 2:
                 thread = self.bot.get_channel(thread_id)
@@ -131,13 +131,13 @@ class CoreFunction(commands.Cog):
             elif reminded_stage == "warning" and hours_open >= 4:
                 thread = self.bot.get_channel(thread_id)
                 if thread:
-                    await delete_last_bot_message(self, thread)
+                    await self.delete_last_bot_message(thread)
                     await thread.send(f"⏰❗ <@{applicant_id}> **Final reminder!** Please complete your application!")
                     db.mark_applicant_reminded(thread_id, "final_warning")
             elif reminded_stage == "final_warning" and hours_open >= 6:
                 thread = self.bot.get_channel(thread_id)
                 if thread:
-                    await delete_last_bot_message(self, thread)
+                    await self.delete_last_bot_message(thread)
                     embed = discord.Embed(
                         color=0x4a4a4f, 
                         title="🪦 Application Automatically Closed", 
@@ -154,7 +154,6 @@ class CoreFunction(commands.Cog):
         await self.bot.wait_until_ready()
 
 
-    # load whitelist message details from txt storage
     def load_whitelist_message(self):
         try:
             with open("storage/whitelist_message.txt", "r") as file:
@@ -202,12 +201,11 @@ class CoreFunction(commands.Cog):
         await app_thread.edit(name=f"🗑️ {user.name}'s application", locked=True, invitable=False, auto_archive_duration=60)
         await log_channel.send(embed=abandoned_embed)
 
-async def delete_last_bot_message(self, channel):
-    async for message in channel.history(limit=10):
-        if message.author == self.bot.user:
-            await message.delete()
-            break
-
+    async def delete_last_bot_message(self, channel):
+        async for message in channel.history(limit=10):
+            if message.author == self.bot.user:
+                await message.delete()
+                break
 
     @commands.Cog.listener()
     async def on_message(self, message):
