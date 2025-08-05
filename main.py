@@ -26,7 +26,7 @@ bot_status_list = cycle([
         "barebonesmp.com"
         ])
 
-@tasks.loop(seconds=5)
+@tasks.loop(minutes=15)
 async def update_bot_status():
     await bot.change_presence(
         activity=discord.Activity(
