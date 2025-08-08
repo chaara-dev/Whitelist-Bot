@@ -138,6 +138,8 @@ class SlashCommands(commands.Cog):
                 member_role = interaction.guild.get_role(constant.MEMBER_ROLE_ID)
                 user_id = interaction.user.id
 
+                await interaction.response.defer(ephemeral=True)
+
                 approved_embed = await self.fill_embed(interaction, True, user, minecraft_name, client_type, None)
                 approved_embed.title = "Application Approved"
                 approved_embed.add_field(name="Thread", value=f"<#{command_channel.id}>", inline=False)
@@ -152,11 +154,12 @@ class SlashCommands(commands.Cog):
 
                 await command_channel.send(embed=public_approved_embed)
                 await log_channel.send(embed=approved_embed)
+                await ext_core.CoreFunction.dm_member_approve(self, member=user, channel=command_channel, minecraft_name=minecraft_name)
                 await command_channel.edit(name=f"✅ {minecraft_name}'s application", locked=True, invitable=False, auto_archive_duration=60)
 
                 await chat_channel.send(await self.run_whitelist_command(minecraft_name, client_type))
                 user_update_status = await self.update_user(user, minecraft_name, member_role)
-                await interaction.response.send_message(f"{user_update_status}", ephemeral=True)
+                await interaction.followup.send(f"{user_update_status}", ephemeral=True)
 
 
     # deny a whitelist application inside private thread
@@ -167,6 +170,8 @@ class SlashCommands(commands.Cog):
             command_channel = interaction.channel
             log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
             user_id = interaction.user.id
+
+            await interaction.response.defer()
 
             deniedEmbed = await self.fill_embed(interaction, False, user, None, None, reason)
             deniedEmbed.title = "Application Denied"
@@ -180,9 +185,10 @@ class SlashCommands(commands.Cog):
             db.mark_application(thread_id=command_channel.id, status="denied", reviewer_id=user_id)
             db.update_staff_stats(staff_id=user_id, stat_type="denied")
 
-            await interaction.response.send_message("Application Denied.", ephemeral=True)
+            await interaction.followup.send("Application Denied.", ephemeral=True)
             await command_channel.send(embed=publicDeniedEmbed)
             await log_channel.send(embed=deniedEmbed)
+            await ext_core.CoreFunction.dm_member_deny(self, member=user)
             
             await command_channel.edit(name=f"❌ {user.name}'s application", locked=True, invitable=False, auto_archive_duration=60)
 

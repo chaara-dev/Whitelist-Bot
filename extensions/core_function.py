@@ -1,5 +1,5 @@
 import discord
-import asyncio
+import traceback
 from datetime import datetime
 from contextlib import closing
 from termcolor import colored
@@ -52,16 +52,21 @@ class ApplicationView(discord.ui.View):
                 try:
                     await button.response.send_message(f"**You've already applied for the whitelist.**\nIf you have since been removed, please contact a staff member or make a <#{constant.SUPPORT_CHANNEL_ID}> post.", ephemeral=True)
                 except Exception as error:
-                    print(f"error: {error}")
-                    await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a staff member.", ephemeral=True)
+                    format = "%Y-%m-%d %H:%M:%S%z"
+                    print(f"{colored(f"Error: {error}", "red")} at {colored(f"{datetime.now():{format}}", "green")}")
+                    traceback.print_exc()
+                    await button.response.send_message(f"Something went wrong. Please try again later.\nIf the error persists, contact `@lostbrickplacer`.", ephemeral=True)
             elif db.has_open_application(user_id):
                 try:
-                    await button.response.send_message(f"**You already have an open application at <#{db.get_open_application_id(user_id)}>**. Please fill that one out or wait to be accepted.", ephemeral=True)
+                    await button.response.send_message(f"**You already have an open application at <#{db.get_open_application_id(user_id)}>**.\nPlease fill that one out or wait to be accepted.", ephemeral=True)
                 except Exception as error:
-                    print(f"error: {error}")
-                    await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact a staff member.", ephemeral=True)
+                    format = "%Y-%m-%d %H:%M:%S%z"
+                    print(f"{colored(f"Error: {error}", "red")} at {colored(f"{datetime.now():{format}}", "green")}")
+                    traceback.print_exc()
+                    await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact `@lostbrickplacer`", ephemeral=True)
         except Exception as error:
             print(f"BUTTON CALLBACK FUNCTION ERROR: {error}")
+            traceback.print_exc()
 
 class AvailableRoleView(discord.ui.View):
     def __init__(self, bot) -> None:
@@ -83,6 +88,7 @@ class AvailableRoleView(discord.ui.View):
                 await button.response.defer()
         except Exception as error:
             print(f"ERROR: {error}")
+            traceback.print_exc()
             await button.response.send_message("Something went wrong while adding your `Available` role.")
 
     @discord.ui.button(label="Remove Ping Role", style=discord.ButtonStyle.red, custom_id="remove_role_buton")
@@ -96,6 +102,7 @@ class AvailableRoleView(discord.ui.View):
                 await button.response.defer()
         except Exception as error:
             print(f"ERROR: {error}")
+            traceback.print_exc()
             await button.response.send_message("Something went wrong while removing your `Available` role.")
 
 class CoreFunction(commands.Cog):
@@ -242,6 +249,12 @@ class CoreFunction(commands.Cog):
 
             if member.id == applicant_id:
                 await self.set_application_abandoned(thread_id, applicant_id)
+
+    async def dm_member_approve(self, member: discord.Member, channel: discord.Thread, minecraft_name: str):
+        await member.send(f"## Your whitelist application to BareBonesMP has been approved!\nWelcome to the community!\n\n**Minecraft Name:** `{minecraft_name}`\n**Your Application:** <#{channel.id}>\n**Java IP:** `play.barebonesmp.com`\n**Bedrock IP:** `play.barebonesmp.com:19132`\n-# If you have any issues joining or any questions you can ask in <#{constant.SUPPORT_CHANNEL_ID}> or @ any of the staff members.")
+
+    async def dm_member_deny(self, member: discord.Member, reason: str, channel: discord.Thread):
+        await member.send(f"## Your whitelist application to BareBonesMP has been denied.\n**Denial Reason:** `{reason}`\n**Your Application:** <#{channel.id}>\n*Please review the rules and reasoning before applying again. Spam applying will result in a ban.*")
 
 
 async def setup(bot):

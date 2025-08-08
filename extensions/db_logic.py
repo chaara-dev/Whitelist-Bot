@@ -82,7 +82,7 @@ def has_open_application(user_id):
     c = conn.cursor()
     c.execute("""--sql
         SELECT COUNT(*) FROM applications
-        WHERE user_id = ? AND status IN ('open', 'approved')
+        WHERE user_id = ? AND status IN ('open')
     """, (user_id,))
     count = c.fetchone()[0]
     conn.close()
