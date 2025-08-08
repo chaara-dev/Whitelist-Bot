@@ -271,7 +271,7 @@ class SlashCommands(commands.Cog):
             await interaction.edit_original_response(content=f"<#{constant.APP_CHANNEL_ID}> whitelist embed message updated.")
 
 
-    @app_commands.command(name="whitelist_stats", description="Display approved/denied statistics for whitelist applications.")
+    @app_commands.command(name="whitelist-stats", description="Display approved/denied statistics for whitelist applications.")
     @user_is_staff()
     async def whitelist_stats(self, interaction):
         stats = db.get_whitelist_stats()
