@@ -53,7 +53,7 @@ class ApplicationView(discord.ui.View):
                     await button.response.send_message(f"**You've already applied for the whitelist.**\nIf you have since been removed, please contact a staff member or make a <#{constant.SUPPORT_CHANNEL_ID}> post.", ephemeral=True)
                 except Exception as error:
                     format = "%Y-%m-%d %H:%M:%S%z"
-                    print(f"{colored(f"Error: {error}", "red")} at {colored(f"{datetime.now():{format}}", "green")}")
+                    print(f'{colored(f"Error: {error}", "red")} at {colored(f"{datetime.now():{format}}", "green")}')
                     traceback.print_exc()
                     await button.response.send_message(f"Something went wrong. Please try again later.\nIf the error persists, contact `@lostbrickplacer`.", ephemeral=True)
             elif db.has_open_application(user_id):
@@ -61,7 +61,7 @@ class ApplicationView(discord.ui.View):
                     await button.response.send_message(f"**You already have an open application at <#{db.get_open_application_id(user_id)}>**.\nPlease fill that one out or wait to be accepted.", ephemeral=True)
                 except Exception as error:
                     format = "%Y-%m-%d %H:%M:%S%z"
-                    print(f"{colored(f"Error: {error}", "red")} at {colored(f"{datetime.now():{format}}", "green")}")
+                    print(f'{colored(f"Error: {error}", "red")} at {colored(f"{datetime.now():{format}}", "green")}')
                     traceback.print_exc()
                     await button.response.send_message("Something went wrong. Please try again later.\nIf the error persists, contact `@lostbrickplacer`", ephemeral=True)
         except Exception as error:

@@ -17,7 +17,7 @@ class TextCommands(commands.Cog):
         cog_slash = self.bot.get_cog("SlashCommands")
         cog_core = self.bot.get_cog("CoreFunction")
 
-        if context.author.id == constant.OWNER_ID:
+        if context.author.id == constant.OWNER_ID or context.author.id == constant.BRICKY_ID:
             await self.bot.reload_extension("extensions.text_commands")
             await self.bot.reload_extension("extensions.slash_commands")
             await self.bot.reload_extension("extensions.core_function")
@@ -41,7 +41,7 @@ class TextCommands(commands.Cog):
 
     @commands.command()
     async def purge(self, context, amount: int):
-        if context.author.id == constant.OWNER_ID:
+        if context.author.id == constant.OWNER_ID context.author.id == constant.BRICKY_ID:
             deleted = await context.channel.purge(limit=amount + 1)
             await context.send(f"Deleted {len(deleted) - 1} message(s).", delete_after=0.25)
         else:

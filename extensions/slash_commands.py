@@ -31,7 +31,7 @@ class SlashCommands(commands.Cog):
     # check if command user is Owner
     def user_is_owner():
         async def predicate(interaction: discord.Interaction) -> bool:
-            if interaction.user.id != constant.OWNER_ID:
+            if interaction.user.id != constant.OWNER_ID or interaction.user.id != constant.BRICKY_ID:
                 raise c_error.UserIsNotOwner("You don't have permission to use that command.")
             return True
         return app_commands.check(predicate)
