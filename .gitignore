@@ -2,4 +2,5 @@
 *.json
 **/__pycache__
 *.db
-EXAMPLE.py
+**/whitelistbotvenv
+*.log
