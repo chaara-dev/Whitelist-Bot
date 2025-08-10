@@ -41,7 +41,7 @@ class TextCommands(commands.Cog):
 
     @commands.command()
     async def purge(self, context, amount: int):
-        if context.author.id == constant.OWNER_ID context.author.id == constant.BRICKY_ID:
+        if context.author.id == constant.OWNER_ID or context.author.id == constant.BRICKY_ID:
             deleted = await context.channel.purge(limit=amount + 1)
             await context.send(f"Deleted {len(deleted) - 1} message(s).", delete_after=0.25)
         else:
@@ -54,7 +54,7 @@ class TextCommands(commands.Cog):
 
     @commands.command()
     async def sync(self, context):
-            if context.author.id == constant.OWNER_ID:
+            if context.author.id == constant.OWNER_ID or context.author.id == constant.BRICKY_ID:
                 await self.bot.tree.sync()
                 print("Command tree synced.")
                 await context.message.add_reaction("✅")
