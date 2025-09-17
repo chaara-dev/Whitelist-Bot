@@ -8,12 +8,13 @@ class CustomErrors():
     class UserIsNotOwner(app_commands.CheckFailure):
         pass #error to handle if command used by someone other than owner
 
-class Constants():
-    SERVER_ID = 121769661439279105 # BareBonesMP Discord Server ID
-    OWNER_ID = 121769553603723265 # @nomanasendhelp ID
-    BRICKY_ID = 624613879414259789 # @lostbrickplacer ID
+class NewConstants():
+    SERVER_ID = 121769661439279105 # BareBonesMP Discord Server
+    OWNER_ID = 121769553603723265 # @nomanasendhelp
+    BRICKY_ID = 624613879414259789 # @lostbrickplacer
 
-    STAFF_ROLE_ID = 767810219882840114 # Staff (not Team) Role ID
+    STAFF_ROLE_ID = 767810219882840114 # Staff (not Team) Role
+    HELPER_ROLE_ID = 1354910908727689267 # Helper Role
     AVAILABLE_ROLE_ID = 1399423222713290914 # Applications Role
     MEMBER_ROLE_ID = 566792092983099405 # Members Role
 
@@ -25,12 +26,13 @@ class Constants():
 
 
 
-class OldConstants():
+class Constants():
     SERVER_ID = 1085767835495714888
     OWNER_ID = 624613879414259789
     BRICKY_ID = 624613879414259789
 
     STAFF_ROLE_ID = 1397108751579873371
+    HELPER_ROLE_ID = 1417948589350715554
     AVAILABLE_ROLE_ID = 1399281907027673138
     MEMBER_ROLE_ID = 1397367926440329216
 
