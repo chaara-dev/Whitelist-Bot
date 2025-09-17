@@ -30,6 +30,10 @@ Whitelist Bot is a single purpose discord bot built using [discord.py](https://g
 <img src="assets/stats.png">
 <img src="assets/get_role.png">
 
+
+### 💾 Using the bot
+
+
 </br>
 </br>
 
