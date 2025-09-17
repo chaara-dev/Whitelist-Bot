@@ -21,13 +21,17 @@ class SlashCommands(commands.Cog):
 
 
     # check if command user is Staff
-    def user_is_staff():
-            async def predicate(interaction: discord.Interaction) -> bool:
-                staff_role = interaction.user.get_role(constant.STAFF_ROLE_ID)
-                if staff_role is None:
+    def user_is_elevated():
+        async def predicate(interaction: discord.Interaction) -> bool:
+            staff_role = interaction.user.get_role(constant.STAFF_ROLE_ID)
+            helper_role = interaction.user.get_role(constant.HELPER_ROLE_ID)
+            if staff_role is None:
+                if helper_role is None:
                     raise c_error.UserIsNotStaff("You don't have permission to use that command.")
-                return True
-            return app_commands.check(predicate)
+            return True
+        return app_commands.check(predicate)
+
+
     # check if command user is Owner
     def user_is_owner():
         async def predicate(interaction: discord.Interaction) -> bool:
@@ -35,6 +39,8 @@ class SlashCommands(commands.Cog):
                 raise c_error.UserIsNotOwner("You don't have permission to use that command.")
             return True
         return app_commands.check(predicate)
+
+
     # check if command used in valid channel
     def used_in_valid_channel():
         def predicate(interaction: discord.Interaction) -> bool:
@@ -43,6 +49,8 @@ class SlashCommands(commands.Cog):
                 raise c_error.InvalidCommandChannel("You're in the wrong channel for that command!")
             return True
         return app_commands.check(predicate)
+
+
     # change nickname and add member role
     async def update_user(self, user, minecraft_name, role):
         nick_success = False
@@ -53,7 +61,6 @@ class SlashCommands(commands.Cog):
             nick_success = True
         except: 
             nick_success = False
-
         if user.get_role(constant.MEMBER_ROLE_ID): 
             role_success = True
         else: 
@@ -62,16 +69,19 @@ class SlashCommands(commands.Cog):
                 role_success = True
             except: 
                 role_success = False
-
         if nick_success and role_success: return "✅Application Approved."
         elif nick_success and not role_success: return "✅Application Approved.\n`❗Failed to add member role.`"
         elif not nick_success and role_success: return "✅Application Approved.\n`❗Failed to change nickname.`"
         else: return "✅Application Approved.\n`❗Failed to change nickname.\n❗Failed to add member role.`"
+
+
     # run commands to add member to whitelist
     async def run_whitelist_command(self, minecraft_name, client_type):
         if client_type == self.Platforms.Java: return f"!c whitelist add {minecraft_name}"
         elif client_type == self.Platforms.Bedrock: return f"!c fwhitelist add {minecraft_name}"
         else: return "Something went wrong."
+
+
     # populate discord embed with details about approved user
     async def fill_embed(self, interaction, embed_type, user, minecraft_name, client_type, reason):
         if embed_type == True: embed = discord.Embed(color=0x72c87a)
@@ -92,6 +102,8 @@ class SlashCommands(commands.Cog):
         embed.timestamp = datetime.datetime.now()
 
         return embed
+
+
     # load whitelist message and return a code block displayable string
     def get_format_whitelist_message(self):
         formatted_message = ""
@@ -105,6 +117,8 @@ class SlashCommands(commands.Cog):
                 return formatted_message
         except FileNotFoundError:
             return None
+
+
     # use input message and set whitelist message with proper code block formatting
     def set_format_whitelist_message(self, message : str):
         formatted_message = ""
@@ -118,6 +132,8 @@ class SlashCommands(commands.Cog):
                 file.write(formatted_message)
         except FileNotFoundError:
             return None
+
+
     # loads a default whitelist message from seperate file
     def get_default_whitelist_message(self):
         try: 
@@ -126,10 +142,11 @@ class SlashCommands(commands.Cog):
         except FileNotFoundError:
             return None
 
+
     # approve a whitelist application inside private thread
     @app_commands.command(name="approve", description="Approve a whitelist application.")
     @app_commands.describe(client_type="The applicant's platform.")
-    @user_is_staff()
+    @user_is_elevated()
     @used_in_valid_channel()
     async def approve(self, interaction, user: discord.Member, minecraft_name: str, client_type: Platforms, message: typing.Optional[str] = "Welcome!"):
                 command_channel = interaction.channel
@@ -164,7 +181,7 @@ class SlashCommands(commands.Cog):
 
     # deny a whitelist application inside private thread
     @app_commands.command(name="deny", description="Deny a whitelist application.")
-    @user_is_staff()
+    @user_is_elevated()
     @used_in_valid_channel()
     async def deny(self, interaction, user: discord.Member, reason: str ):
             command_channel = interaction.channel
@@ -196,7 +213,7 @@ class SlashCommands(commands.Cog):
     # approve a whitelist application without being in application thread
     @app_commands.command(name="quick-approve", description="Simple /approve without channel requirements.")
     @app_commands.describe(client_type="The applicant's platform.")
-    @user_is_staff()
+    @user_is_elevated()
     async def quickapprove(self, interaction, user: discord.Member, minecraft_name: str, client_type: Platforms):
             command_channel = interaction.channel
             log_channel = self.bot.get_channel(constant.LOGS_CHANNEL_ID)
@@ -272,7 +289,7 @@ class SlashCommands(commands.Cog):
 
 
     @app_commands.command(name="whitelist-stats", description="Display approved/denied statistics for whitelist applications.")
-    @user_is_staff()
+    @user_is_elevated()
     async def whitelist_stats(self, interaction):
         stats = db.get_whitelist_stats()
         # stats indexes: [ [0]total | [1]approved | [2]denied | [3]hours | [4]minutes | [5]staff_rows | [6]abandoned ]
@@ -328,6 +345,7 @@ class SlashCommands(commands.Cog):
             else:
                 print(error)
                 await interaction.followup.send(f"Error: {error}", ephemeral=True)
+
 
 async def setup(bot):
     await bot.add_cog(SlashCommands(bot))
