@@ -93,5 +93,7 @@ Whitelist Bot is a single purpose discord bot built using [discord.py](https://g
 - slash commands to view recent applications for each staff member
 
 - command to list all applicants in filtered time (X in past week/month/20d/etc, usernames and thread links in bullets)
+
+- update stats view to show percentages of approved/denied per staff
 ```
 </details>
